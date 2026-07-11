@@ -2,7 +2,8 @@
 # In Coolify: "Docker Compose" build pack, point at this file. Or use the
 # Dockerfile build pack with docker/Dockerfile.seede directly.
 services:
-  seede-monitor:
+  seedexr-monitor:
+    image: seedexr-monitor:latest
     build:
       context: .
       dockerfile: docker/Dockerfile.seede
