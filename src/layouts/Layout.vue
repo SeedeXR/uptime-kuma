@@ -282,7 +282,6 @@ $sidebar-width-collapsed: 74px;
     // Always dark (the admin brand logo is light); pairs with light or dark content.
     background: rgba(18, 18, 18, 0.82);
     backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     transition: width 0.2s ease;
     overflow-x: hidden;

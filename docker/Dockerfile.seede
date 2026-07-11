@@ -15,9 +15,11 @@ WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
-# Install ALL deps (devDeps needed to build the frontend) — leave NODE_ENV unset here
+# Install ALL deps (devDeps needed to build the frontend) — leave NODE_ENV unset here.
+# --legacy-peer-deps: the tree has a peer conflict (@hey-api/openapi-ts wants TS>=5.5,
+# project pins typescript@4.4.4) that older npm (Coolify ships npm 10) rejects with ERESOLVE.
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 COPY . .
 RUN npm run build \

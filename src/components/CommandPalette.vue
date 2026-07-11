@@ -174,7 +174,6 @@ export default {
     z-index: 1090;
     background: rgba(18, 18, 18, 0.45);
     backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -186,7 +185,6 @@ export default {
     max-width: 560px;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
     border: 1px solid rgba(198, 198, 198, 0.6);
     border-radius: $border-radius;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);

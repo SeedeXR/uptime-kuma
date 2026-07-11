@@ -40,6 +40,6 @@ and stored in `/app/data/db-config.json`.
 Add the corresponding apt/pip packages to `Dockerfile.seede` if a deployment needs them.
 
 ## Verification
-- Local: `docker build -f docker/Dockerfile.seede -t seede-monitor .` then
-  `docker run -p 3001:3001 -v seede-data:/app/data seede-monitor` → open http://localhost:3001.
+- Local: `docker build -f docker/Dockerfile.seede -t seedexr-monitor .` then
+  `docker run -p 3001:3001 -v seede-data:/app/data seedexr-monitor` → open http://localhost:3001.
 - Confirm the container reports healthy after the start-period.

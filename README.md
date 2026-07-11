@@ -27,8 +27,8 @@ workspace, branded email alerts (Resend), an in-app onboarding flow, and Lucide 
 Builds a self-contained, rebranded image (no external base images):
 
 ```bash
-docker build -f docker/Dockerfile.seede -t seede-monitor .
-docker run -d --name seede-monitor -p 3001:3001 -v seede-data:/app/data seede-monitor
+docker build -f docker/Dockerfile.seede -t seedexr-monitor .
+docker run -d --name seedexr-monitor -p 3001:3001 -v seede-data:/app/data seedexr-monitor
 ```
 
 Open <http://localhost:3001> and complete the one-time setup wizard.
