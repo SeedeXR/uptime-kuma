@@ -13,7 +13,7 @@
         </div>
     </div>
 
-    <div class="alert alert-info" style="border-radius: 8px">
+    <div class="alert alert-info" style="border-radius: 1.5px">
         <h6 style="margin-bottom: 12px; font-weight: 600">{{ $t("Quick Setup Guide") }}:</h6>
         <ol style="margin-bottom: 0; padding-left: 20px; line-height: 1.8">
             <li>{{ $t("Open your Google Spreadsheet") }}</li>

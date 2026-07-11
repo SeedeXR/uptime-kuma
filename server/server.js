@@ -1,9 +1,9 @@
 /*
- * Uptime Kuma Server
+ * Seede XR Server
  * node "server/server.js"
  * DO NOT require("./server") in other modules, it likely creates circular dependency!
  */
-console.log("Welcome to Uptime Kuma");
+console.log("Welcome to Seede XR");
 
 // As the log function need to use dayjs, it should be very top
 const dayjs = require("dayjs");
@@ -28,7 +28,7 @@ const requiredNodeVersionsComma = requiredNodeVersions
     .map((version) => version.trim())
     .join(", ");
 
-// Exit Uptime Kuma immediately if the Node.js version is banned
+// Exit Seede XR immediately if the Node.js version is banned
 if (semver.satisfies(nodeVersion, bannedNodeVersions)) {
     console.error(
         "\x1b[31m%s\x1b[0m",
@@ -88,7 +88,7 @@ if (isDev || process.env.UPTIME_KUMA_DEBUG_INSPECTOR === "1") {
 }
 
 const checkVersion = require("./check-version");
-log.info("server", "Uptime Kuma Version:", checkVersion.version);
+log.info("server", "Seede XR Version:", checkVersion.version);
 
 log.info("server", "Loading modules");
 
@@ -203,6 +203,7 @@ const { dockerSocketHandler } = require("./socket-handlers/docker-socket-handler
 const { maintenanceSocketHandler } = require("./socket-handlers/maintenance-socket-handler");
 const { apiKeySocketHandler } = require("./socket-handlers/api-key-socket-handler");
 const { generalSocketHandler } = require("./socket-handlers/general-socket-handler");
+const { userSocketHandler } = require("./socket-handlers/user-socket-handler");
 const { Settings } = require("./settings");
 const apicache = require("./modules/apicache");
 const { resetChrome } = require("./monitor-types/real-browser-monitor-type");
@@ -212,11 +213,30 @@ const { chartSocketHandler } = require("./socket-handlers/chart-socket-handler")
 
 app.use(express.json());
 
-// Global Middleware
+// Global Middleware — security headers
 app.use(function (req, res, next) {
+    // Complete CSP tuned for this SPA. 'unsafe-inline' (styles + scripts) and broad
+    // https: sources are required by the framework's inline styles and the
+    // user-configurable status-page analytics; a strict nonce-based policy would need
+    // an app-wide refactor. object-src 'self' allows the <object>-embedded logo.
+    const cspParts = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' https:",
+        "style-src 'self' 'unsafe-inline' https:",
+        "img-src 'self' data: blob: https:",
+        "font-src 'self' data: https:",
+        "connect-src 'self' ws: wss: https:",
+        "object-src 'self'",
+        "base-uri 'self'",
+    ];
     if (!disableFrameSameOrigin) {
         res.setHeader("X-Frame-Options", "SAMEORIGIN");
+        cspParts.push("frame-ancestors 'self'");
     }
+    res.setHeader("Content-Security-Policy", cspParts.join("; "));
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    // Disable browser features the app does not use
+    res.setHeader("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
     res.removeHeader("X-Powered-By");
     next();
 });
@@ -710,7 +730,7 @@ let needSetup = false;
 
                 if ((await R.knex("user").count("id as count").first()).count !== 0) {
                     throw new Error(
-                        "Uptime Kuma has been initialized. If you want to run setup again, please delete the database."
+                        "Seede XR has been initialized. If you want to run setup again, please delete the database."
                     );
                 }
 
@@ -822,8 +842,9 @@ let needSetup = false;
 
                 let bean = await R.findOne("monitor", " id = ? ", [monitor.id]);
 
-                if (bean.user_id !== socket.userID) {
-                    throw new Error("Permission denied.");
+                // Shared admin workspace: any admin may edit any monitor (no per-user ownership check)
+                if (bean === null) {
+                    throw new Error("Monitor not found.");
                 }
 
                 // Check if Parent is Descendant (would cause endless loop)
@@ -1010,7 +1031,7 @@ let needSetup = false;
 
                 log.info("monitor", `Get Monitor: ${monitorID} User ID: ${socket.userID}`);
 
-                let monitor = await R.findOne("monitor", " id = ? AND user_id = ? ", [monitorID, socket.userID]);
+                let monitor = await R.findOne("monitor", " id = ? ", [monitorID]);
                 const monitorData = [{ id: monitor.id, active: monitor.active }];
                 const preloadData = await Monitor.preparePreloadData(monitorData);
                 callback({
@@ -1133,7 +1154,7 @@ let needSetup = false;
                 const startTime = Date.now();
 
                 // Check if this is a group monitor
-                const monitor = await R.findOne("monitor", " id = ? AND user_id = ? ", [monitorID, socket.userID]);
+                const monitor = await R.findOne("monitor", " id = ? ", [monitorID]);
 
                 // Log with context about deletion type
                 if (monitor && monitor.type === "group") {
@@ -1736,6 +1757,7 @@ let needSetup = false;
         remoteBrowserSocketHandler(socket);
         generalSocketHandler(socket, server);
         chartSocketHandler(socket);
+        userSocketHandler(socket);
 
         log.debug("server", "added all socket handlers");
 
@@ -1807,7 +1829,7 @@ async function updateMonitorNotification(monitorID, notificationIDList) {
  * @throws {Error} The specified user does not own the monitor
  */
 async function checkOwner(userID, monitorID) {
-    let row = await R.getRow("SELECT id FROM monitor WHERE id = ? AND user_id = ? ", [monitorID, userID]);
+    let row = await R.getRow("SELECT id FROM monitor WHERE id = ? ", [monitorID]);
 
     if (!row) {
         throw new Error("You do not own this monitor.");
@@ -1823,7 +1845,11 @@ async function checkOwner(userID, monitorID) {
  */
 async function afterLogin(socket, user) {
     socket.userID = user.id;
-    socket.join(user.id);
+    // Shared admin workspace: every admin joins every admin's room, so monitor
+    // events (emitted to the owner's room) reach all admins in real time.
+    for (const u of await R.getAll("SELECT id FROM `user`")) {
+        socket.join(u.id);
+    }
 
     let monitorList = await server.sendMonitorList(socket);
     await Promise.allSettled([
@@ -1879,7 +1905,7 @@ async function initDatabase(testMode = false) {
         log.debug("server", "Load JWT secret from database.");
     }
 
-    // If there is no record in user table, it is a new Uptime Kuma instance, need to setup
+    // If there is no record in user table, it is a new Seede XR instance, need to setup
     if ((await R.knex("user").count("id as count").first()).count === 0) {
         log.info("server", "No user, need setup");
         needSetup = true;
@@ -1899,7 +1925,7 @@ async function startMonitor(userID, monitorID) {
 
     log.info("manage", `Resume Monitor: ${monitorID} User ID: ${userID}`);
 
-    await R.exec("UPDATE monitor SET active = 1 WHERE id = ? AND user_id = ? ", [monitorID, userID]);
+    await R.exec("UPDATE monitor SET active = 1 WHERE id = ? ", [monitorID]);
 
     let monitor = await R.findOne("monitor", " id = ? ", [monitorID]);
 
@@ -1932,7 +1958,7 @@ async function pauseMonitor(userID, monitorID) {
 
     log.info("manage", `Pause Monitor: ${monitorID} User ID: ${userID}`);
 
-    await R.exec("UPDATE monitor SET active = 0 WHERE id = ? AND user_id = ? ", [monitorID, userID]);
+    await R.exec("UPDATE monitor SET active = 0 WHERE id = ? ", [monitorID]);
 
     if (monitorID in server.monitorList) {
         await server.monitorList[monitorID].stop();

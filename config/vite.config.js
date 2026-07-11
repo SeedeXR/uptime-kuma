@@ -44,7 +44,23 @@ export default defineConfig({
         },
         rollupOptions: {
             output: {
-                manualChunks(id, { getModuleInfo, getModuleIds }) {},
+                // Split heavy, rarely-changing vendor libs into their own long-term-cacheable
+                // chunks. Only eager deps are grouped here; lazy deps (e.g. chart.js via
+                // PingChart) are left to Vite's automatic code-splitting so they stay lazy.
+                manualChunks(id) {
+                    if (!id.includes("node_modules")) {
+                        return;
+                    }
+                    if (/[\\/]node_modules[\\/](vue|@vue|vue-router|vue-i18n|vue-toastification|vuedraggable)[\\/]/.test(id)) {
+                        return "vendor-vue";
+                    }
+                    if (/[\\/]node_modules[\\/]bootstrap[\\/]/.test(id)) {
+                        return "vendor-bootstrap";
+                    }
+                    if (/[\\/]node_modules[\\/](dayjs|axios|mitt|nanoid|jwt-decode|qs)[\\/]/.test(id)) {
+                        return "vendor-core";
+                    }
+                },
             },
         },
     },

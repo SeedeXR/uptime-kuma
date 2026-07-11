@@ -13,7 +13,7 @@ class FlashDuty extends NotificationProvider {
     async send(notification, msg, monitorJSON = null, heartbeatJSON = null) {
         try {
             if (heartbeatJSON == null) {
-                const title = "Uptime Kuma Alert";
+                const title = "Seede XR Alert";
                 const monitor = {
                     type: "ping",
                     url: msg,
@@ -23,13 +23,13 @@ class FlashDuty extends NotificationProvider {
             }
 
             if (heartbeatJSON.status === UP) {
-                const title = "Uptime Kuma Monitor ✅ Up";
+                const title = "Seede XR Monitor ✅ Up";
 
                 return this.postNotification(notification, title, heartbeatJSON.msg, monitorJSON, "Ok");
             }
 
             if (heartbeatJSON.status === DOWN) {
-                const title = "Uptime Kuma Monitor 🔴 Down";
+                const title = "Seede XR Monitor 🔴 Down";
                 return this.postNotification(
                     notification,
                     title,
@@ -95,7 +95,7 @@ class FlashDuty extends NotificationProvider {
 
         const baseURL = await Settings.get("primaryBaseURL");
         if (baseURL && monitorInfo) {
-            options.client = "Uptime Kuma";
+            options.client = "Seede XR";
             options.client_url = baseURL + getMonitorRelativeURL(monitorInfo.id);
         }
 

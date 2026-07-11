@@ -124,7 +124,7 @@ export default {
         background: rgba(17, 24, 39, 0.95);
         backdrop-filter: blur(8px);
         border: 1px solid rgba(75, 85, 99, 0.3);
-        border-radius: 8px;
+        border-radius: 1.5px;
         padding: 8px 12px;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
         min-width: 120px;

@@ -617,7 +617,7 @@ export default {
         }
 
         .dropdown-item {
-            border-radius: 0.3rem;
+            border-radius: 1.5px;
             padding: 2px 16px 4px;
 
             .dark & {

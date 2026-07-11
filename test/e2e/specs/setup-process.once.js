@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { getSqliteDatabaseExists, login, screenshot, takeSqliteSnapshot } from "../util-test";
 
 test.describe("Uptime Kuma Setup", () => {
@@ -29,6 +29,9 @@ test.describe("Uptime Kuma Setup", () => {
         await page.getByPlaceholder("Password", { exact: true }).press("Tab");
         await page.getByPlaceholder("Repeat Password").fill("admin123");
         await page.getByRole("button", { name: "Create" }).click();
+        // Wait for setup to actually complete before the test ends (avoids a teardown race
+        // where the admin account is not yet persisted). The create form disappears on success.
+        await expect(page.getByText("Create your admin account")).toBeHidden({ timeout: 15000 });
     });
 
     /*

@@ -1,4 +1,5 @@
 import "bootstrap";
+import "@fontsource-variable/space-grotesk"; // Seede XR brand font (self-hosted)
 import { createApp, h } from "vue";
 import contenteditable from "vue-contenteditable";
 import Toast from "vue-toastification";

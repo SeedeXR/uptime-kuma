@@ -623,7 +623,7 @@ export default {
 
 .list-header {
     border-bottom: 1px solid #dee2e6;
-    border-radius: 10px 10px 0 0;
+    border-radius: 1.5px;
     margin-bottom: 10px;
     padding: 10px;
     display: flex;
@@ -674,7 +674,7 @@ export default {
     .dropdown-menu {
         min-width: 140px;
         padding: 4px 0;
-        border-radius: 8px;
+        border-radius: 1.5px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 
         .dark & {

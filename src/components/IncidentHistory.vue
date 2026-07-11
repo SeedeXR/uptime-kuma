@@ -109,7 +109,7 @@ export default {
         .incident-item {
             display: flex;
             padding: 13px 15px 10px 15px;
-            border-radius: 10px;
+            border-radius: 1.5px;
             transition: all ease-in-out 0.15s;
 
             &:hover {
@@ -123,7 +123,7 @@ export default {
             .incident-style-indicator {
                 width: 6px;
                 min-height: 100%;
-                border-radius: 3px;
+                border-radius: 1.5px;
                 flex-shrink: 0;
                 margin-right: 12px;
             }

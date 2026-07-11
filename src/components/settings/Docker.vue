@@ -5,7 +5,7 @@
                 {{ $t("Not available, please setup.") }}
             </p>
 
-            <ul class="list-group mb-3" style="border-radius: 1rem">
+            <ul class="list-group mb-3" style="border-radius: 1.5px">
                 <li v-for="(dockerHost, index) in $root.dockerHostList" :key="index" class="list-group-item">
                     {{ dockerHost.name }}
                     <br />

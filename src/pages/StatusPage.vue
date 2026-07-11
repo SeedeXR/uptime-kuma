@@ -572,7 +572,7 @@
                 <p v-if="config.showPoweredBy" data-testid="powered-by">
                     {{ $t("Powered by") }}
                     <a target="_blank" rel="noopener noreferrer" href="https://github.com/louislam/uptime-kuma">
-                        {{ $t("Uptime Kuma") }}
+                        {{ $t("Seede XR") }}
                     </a>
                 </p>
 
@@ -1600,7 +1600,7 @@ footer {
         left: -14px;
         background-color: white;
         padding: 5px;
-        border-radius: 10px;
+        border-radius: 1.5px;
         cursor: pointer;
         box-shadow: 0 15px 70px rgba(0, 0, 0, 0.9);
     }

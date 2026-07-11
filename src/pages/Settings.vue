@@ -112,6 +112,12 @@ export default {
                 security: {
                     title: this.$t("Security"),
                 },
+                users: {
+                    title: this.$t("Users"),
+                },
+                help: {
+                    title: this.$t("Help"),
+                },
                 "api-keys": {
                     title: this.$t("API Keys"),
                 },
@@ -263,7 +269,7 @@ footer {
     }
 
     .menu-item {
-        border-radius: 10px;
+        border-radius: 1.5px;
         margin: 0.5em;
         padding: 0.7em 1em;
         cursor: pointer;

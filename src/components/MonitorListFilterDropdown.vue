@@ -53,7 +53,7 @@ export default {
     z-index: 100;
     transition: all 0.2s;
     padding: 5px 0 !important;
-    border-radius: 16px;
+    border-radius: 1.5px;
     overflow: hidden;
 
     position: absolute;

@@ -1,0 +1,25 @@
+# Coolify deployment for Seede XR Monitor (self-built, rebranded image).
+# In Coolify: "Docker Compose" build pack, point at this file. Or use the
+# Dockerfile build pack with docker/Dockerfile.seede directly.
+services:
+  seede-monitor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.seede
+    restart: unless-stopped
+    volumes:
+      # MUST be persistent — holds SQLite DB, db-config.json, uploads, screenshots.
+      # Without it, every redeploy wipes data and re-runs the setup wizard.
+      - seede-data:/app/data
+    ports:
+      - "3001:3001"
+    healthcheck:
+      # Mirrors the image HEALTHCHECK; "/" returns 302 when healthy.
+      test: ["CMD", "node", "extra/healthcheck.js"]
+      interval: 60s
+      timeout: 30s
+      start_period: 180s
+      retries: 5
+
+volumes:
+  seede-data:

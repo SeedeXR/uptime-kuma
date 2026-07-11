@@ -4,6 +4,7 @@
 
 #app {
     font-family:
+        "Space Grotesk Variable",
         "Twemoji Country Flags",
         BlinkMacSystemFont,
         segoe ui,
@@ -26,8 +27,24 @@ h2 {
     font-size: 26px;
 }
 
+// Lucide icon wrapper (see src/icon.js) — align inline like the former Font Awesome icons
+.seede-icon {
+    display: inline-block;
+    vertical-align: -0.125em;
+}
+
+.seede-icon-spin {
+    animation: seede-icon-spin 1s linear infinite;
+}
+
+@keyframes seede-icon-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 textarea.form-control {
-    border-radius: 19px;
+    border-radius: 1.5px;
 }
 
 ::-webkit-scrollbar {
@@ -53,7 +70,7 @@ textarea.form-control {
 }
 
 .list-group {
-    border-radius: 0.75rem;
+    border-radius: 1.5px;
 
     .dark & {
         .list-group-item {
@@ -84,7 +101,7 @@ optgroup {
 // Scrollbar
 ::-webkit-scrollbar-thumb {
     background: #ccc;
-    border-radius: 20px;
+    border-radius: 1.5px;
 }
 
 .modal {
@@ -92,7 +109,7 @@ optgroup {
 }
 
 .modal-content {
-    border-radius: 1rem;
+    border-radius: 1.5px;
     box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
 
     .dark & {
@@ -110,7 +127,7 @@ optgroup {
     //overflow: hidden;   // Forget why add this, but multiple select hide by this
     box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 1.5px;
 
     &.big-padding {
         padding: 20px;
@@ -123,7 +140,7 @@ optgroup {
 }
 
 .btn-sm {
-    border-radius: 25px;
+    border-radius: 1.5px;
 }
 
 .btn-primary {
@@ -138,8 +155,20 @@ optgroup {
         border-color: $highlight;
     }
 
+    // Dark mode: invert the brand accent so a black button stays visible on a black bg
     .dark & {
         color: $dark-font-color2;
+        background-color: white;
+        border-color: white;
+
+        &:hover,
+        &:active,
+        &:focus,
+        &.active {
+            color: $dark-font-color2;
+            background-color: $secondary-text;
+            border-color: $secondary-text;
+        }
     }
 }
 
@@ -185,7 +214,7 @@ optgroup {
 .btn-outline-normal {
     padding: 4px 10px;
     border: 1px solid #ced4da;
-    border-radius: 25px;
+    border-radius: 1.5px;
     background-color: transparent;
 
     .dark & {
@@ -251,7 +280,7 @@ optgroup {
 
 // Dark Theme override here
 .dark {
-    background-color: #090c10;
+    background-color: $dark-bg2;
     color: $dark-font-color;
 
     mark,
@@ -333,13 +362,28 @@ optgroup {
         color: $dark-font-color;
     }
 
+    // Active pill: invert to a light chip so it stays visible on the dark background
+    // (both $primary and the text were near-black → invisible).
     .nav-pills .nav-link.active,
     .nav-pills .show > .nav-link {
         color: $dark-font-color2;
+        background-color: white;
     }
 
+    // Non-active nav links: hover uses a subtle light wash, never a dark-on-dark swap
+    .nav-pills .nav-link:not(.active):hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    // Inverted brand accent in dark mode (black bg would be invisible on dark)
     .bg-primary {
         color: $dark-font-color2;
+        background-color: white !important;
+    }
+
+    .text-primary {
+        color: white !important;
     }
 
     .btn-secondary {
@@ -499,7 +543,7 @@ optgroup {
         display: block;
         text-decoration: none;
         padding: 13px 15px 10px 15px;
-        border-radius: 10px;
+        border-radius: 1.5px;
         transition: all ease-in-out 0.15s;
 
         &.disabled {
@@ -552,7 +596,7 @@ optgroup {
 [contenteditable="true"] {
     transition: all $easing-in 0.2s;
     background-color: rgba(239, 239, 239, 0.7);
-    border-radius: 8px;
+    border-radius: 1.5px;
 
     &.no-bg {
         background-color: transparent !important;
@@ -591,7 +635,7 @@ optgroup {
 }
 
 .vue-image-crop-upload .vicp-wrap {
-    border-radius: 10px !important;
+    border-radius: 1.5px;
 }
 
 .spinner {
@@ -621,7 +665,7 @@ h5.settings-subheading::after {
 .css-editor {
     /* we dont use `language-` classes anymore so thats why we need to add background and text color manually */
 
-    border-radius: 1rem;
+    border-radius: 1.5px;
     padding: 10px 5px;
     border: 1px solid #ced4da;
 

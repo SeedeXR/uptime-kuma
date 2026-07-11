@@ -1,23 +1,34 @@
-$primary: #5cdd8b;
+// === Seede XR brand ===
+// Palette: white #ffffff · black #121212 · grey #C6C6C6
+// Accent ($primary) is brand black; functional status colours kept legible.
+$primary: #121212;        // brand accent (buttons, links, active) — light theme
+$link-color: #121212;
+// brand rule: no component rounder than 1.5px — set every Bootstrap radius var
+$border-radius: 1.5px;
+$border-radius-sm: 1.5px;
+$border-radius-lg: 1.5px;
+$border-radius-pill: 1.5px;
+$secondary-text: #c6c6c6; // brand grey
+$dropdown-border-radius: 1.5px;
+
+// Functional status colours (monitoring UX — must stay distinguishable).
+// "up/ok" now maps to Bootstrap $success (green); see Status.vue / Uptime.vue / HeartbeatBar.vue.
 $danger: #dc3545;
 $warning: #f8a306;
 $maintenance: #1747f5;
-$link-color: #111;
-$border-radius: 50rem;
-$secondary-text: #aaa;
 
-$highlight: #7ce8a4;
-$highlight-white: #e7faec;
+// Accent hover / subtle tint (brand greys, replacing the old green tints)
+$highlight: #333333;
+$highlight-white: #ececec;
 
-$dark-font-color: #b1b8c0;
-$dark-font-color2: #020b05;
-$dark-bg: #0d1117;
-$dark-bg2: #070a10;
-$dark-border-color: #1d2634;
-$dark-header-bg: #161b22;
+// Dark theme — brand black surfaces, grey/white text
+$dark-font-color: #c6c6c6;
+$dark-font-color2: #121212; // dark text placed on light (inverted) accents in dark mode
+$dark-bg: #121212;
+$dark-bg2: #0a0a0a;
+$dark-border-color: #2a2a2a;
+$dark-header-bg: #1a1a1a;
 
 $easing-in: cubic-bezier(0.54, 0.78, 0.55, 0.97);
 $easing-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 $easing-in-out: cubic-bezier(0.79, 0.14, 0.15, 0.86);
-
-$dropdown-border-radius: 0.5rem;

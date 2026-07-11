@@ -19,7 +19,7 @@ export default {
             }
 
             if (this.status === 1) {
-                return "primary";
+                return "success"; // up/ok — functional green (decoupled from brand accent)
             }
 
             if (this.status === 2) {

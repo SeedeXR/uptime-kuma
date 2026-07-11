@@ -301,7 +301,7 @@ export default {
     display: flex;
     align-items: center;
     padding: 2px 10px;
-    border-radius: 16px;
+    border-radius: 1.5px;
     background-color: transparent;
 
     .dark & {

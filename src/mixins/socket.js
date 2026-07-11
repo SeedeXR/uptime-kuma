@@ -768,7 +768,7 @@ export default {
                 } else if (lastHeartBeat.status === UP) {
                     result[monitorID] = {
                         text: this.$t("Up"),
-                        color: "primary",
+                        color: "success", // up — functional green (decoupled from brand accent)
                     };
                 } else if (lastHeartBeat.status === DOWN) {
                     result[monitorID] = {

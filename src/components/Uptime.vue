@@ -55,7 +55,7 @@ export default {
             }
 
             if (this.lastHeartBeat.status === UP) {
-                return "primary";
+                return "success"; // up — functional green (decoupled from brand accent)
             }
 
             if (this.lastHeartBeat.status === PENDING) {

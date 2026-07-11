@@ -1,10 +1,10 @@
 {
-    "name": "Uptime Kuma",
-    "short_name": "Uptime Kuma",
-    "description": "An easy-to-use self-hosted monitoring tool.",
-    "theme_color": "#5cdd8b",
+    "name": "Seede XR",
+    "short_name": "Seede XR",
+    "description": "Seede XR uptime & performance monitoring.",
+    "theme_color": "#121212",
     "start_url": "/",
-    "background_color": "#fff",
+    "background_color": "#ffffff",
     "display": "standalone",
     "icons": [
         {
