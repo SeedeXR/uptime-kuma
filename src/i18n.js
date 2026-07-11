@@ -1,56 +1,9 @@
 import { createI18n } from "vue-i18n/dist/vue-i18n.esm-browser.prod.js";
 import en from "./lang/en.json";
 
-const languageList = {
-    "ar-SY": "العربية",
-    "cs-CZ": "Čeština",
-    "zh-HK": "繁體中文 (香港)",
-    "bg-BG": "Български",
-    be: "Беларуская",
-    "de-DE": "Deutsch (Deutschland)",
-    "de-CH": "Deutsch (Schweiz)",
-    bar: "Bairisch",
-    "nl-NL": "Nederlands",
-    "nb-NO": "Norsk",
-    "es-ES": "Español",
-    eu: "Euskara",
-    fa: "Farsi",
-    "pt-PT": "Português (Portugal)",
-    "pt-BR": "Português (Brasileiro)",
-    fi: "Suomi",
-    "fr-FR": "Français (France)",
-    "he-IL": "עברית",
-    hu: "Magyar",
-    "hr-HR": "Hrvatski",
-    "it-IT": "Italiano (Italian)",
-    "id-ID": "Bahasa Indonesia (Indonesian)",
-    ja: "日本語",
-    "da-DK": "Danish (Danmark)",
-    sr: "Српски",
-    "sl-SI": "Slovenščina",
-    "sr-latn": "Srpski",
-    "sv-SE": "Svenska",
-    "tr-TR": "Türkçe",
-    "ko-KR": "한국어",
-    lt: "Lietuvių",
-    "ru-RU": "Русский",
-    "zh-CN": "简体中文",
-    pl: "Polski",
-    "et-EE": "eesti",
-    "vi-VN": "Tiếng Việt",
-    "zh-TW": "繁體中文 (台灣)",
-    "uk-UA": "Українська",
-    "th-TH": "ไทย",
-    "el-GR": "Ελληνικά",
-    yue: "繁體中文 (廣東話 / 粵語)",
-    ro: "Limba română",
-    ur: "Urdu",
-    ge: "ქართული",
-    uz: "O'zbek tili",
-    ga: "Gaeilge",
-    sk: "Slovenčina",
-    "en-GB": "English (United Kingdom)",
-};
+// Seede XR is English-only. Keeping just `en` avoids shipping 70+ locale chunks
+// and the translation-maintenance burden. (Other src/lang/*.json files were removed.)
+const languageList = {};
 
 let messages = {
     en,
@@ -62,7 +15,7 @@ for (let lang in languageList) {
     };
 }
 
-const rtlLangs = ["he-IL", "fa", "ar-SY", "ur"];
+const rtlLangs = [];
 
 /**
  * Find the best matching locale to display
