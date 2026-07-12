@@ -1,0 +1,159 @@
+// Seede XR design-system primitives.
+// Unlayered overrides (so they beat Bootstrap's unlayered CSS) driven by the brand tokens.
+// Fixes: oversized fonts, inconsistent/low-contrast forms & buttons, premium surfaces.
+// Palette: ink #121212 · paper #fff · muted #c6c6c6 · fog #6b6b6b (≥4.5:1 on paper).
+
+$ink: #121212;
+$paper: #ffffff;
+$muted: #c6c6c6;
+$fog: #6b6b6b;
+$line: #e6e6e6;
+$dk-bg: #121212;
+$dk-bg2: #1a1a1a;
+$dk-line: #2a2a2a;
+$dk-fog: #9a9a9a;
+
+// ---------- Typography scale (tighter / premium; was h1 32 / h2 26) ----------
+// #app prefix so these beat app.scss (later in the bundle) AND component-scoped styles.
+#app {
+    h1, .h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; }
+    h2, .h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; }
+    h3, .h3 { font-size: 1.1rem; font-weight: 600; }
+    h4, .h4 { font-size: 1rem; font-weight: 600; }
+    h5, .h5 { font-size: 0.9375rem; font-weight: 600; }
+    h6, .h6 { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: $fog; }
+
+    .fs-1 { font-size: 1.6rem !important; }
+    .fs-2 { font-size: 1.3rem !important; }
+    .fs-3 { font-size: 1.1rem !important; }
+    .fs-4 { font-size: 1rem !important; }
+}
+
+// ---------- Form controls (premium, consistent, contrast-safe) ----------
+.form-control,
+.form-select {
+    font-size: 0.9375rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid $line;
+    border-radius: 1.5px;
+    color: $ink;
+    background-color: $paper;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder { color: $muted; }
+
+    &:focus {
+        border-color: $ink;
+        box-shadow: 0 0 0 3px rgba(18, 18, 18, 0.08);
+        outline: none;
+    }
+}
+
+.form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $fog;
+    margin-bottom: 0.35rem;
+}
+
+.form-text { color: $fog; font-size: 0.8125rem; }
+
+// ---------- Buttons (premium, consistent) ----------
+.btn {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 1.5px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.btn-sm { font-size: 0.8125rem; padding: 0.35rem 0.7rem; }
+
+.btn-primary {
+    background-color: $ink;
+    border-color: $ink;
+    color: #fff;
+    &:hover, &:focus, &:active { background-color: #2a2a2a; border-color: #2a2a2a; color: #fff; }
+}
+
+// ---------- Surfaces ----------
+.shadow-box {
+    border: 1px solid $line;
+    border-radius: 1.5px;
+    box-shadow: 0 1px 2px rgba(18, 18, 18, 0.04);
+}
+
+// ---------- Dark theme: contrast-safe surfaces & controls ----------
+.dark {
+    .form-control,
+    .form-select {
+        background-color: $dk-bg2;
+        border-color: $dk-line;
+        color: #fff;
+        &::placeholder { color: $dk-fog; }
+        &:focus { border-color: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12); }
+    }
+
+    .form-label, .form-text, h6, .h6 { color: $dk-fog; }
+
+    .shadow-box {
+        border-color: $dk-line;
+        box-shadow: none;
+    }
+
+    // Never render black text on the dark surface
+    .btn-primary { background-color: #fff; border-color: #fff; color: $ink; }
+    .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: $muted; border-color: $muted; color: $ink; }
+}
+
+// ---------- Surfaces: dropdowns / modals / cards ----------
+.dropdown-menu {
+    border: 1px solid $line;
+    border-radius: 1.5px;
+    box-shadow: 0 8px 24px rgba(18, 18, 18, 0.1);
+    padding: 0.35rem;
+}
+.dropdown-item {
+    border-radius: 1.5px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9375rem;
+    &:hover, &:focus { background-color: rgba(18, 18, 18, 0.06); color: $ink; }
+    &.active, &:active { background-color: $ink; color: #fff; }
+}
+.modal-content {
+    border: 1px solid $line;
+    border-radius: 1.5px;
+    box-shadow: 0 24px 60px rgba(18, 18, 18, 0.18);
+}
+.modal-header, .modal-footer { border-color: $line; }
+.card { border: 1px solid $line; border-radius: 1.5px; }
+
+// ---------- Tables ----------
+.table {
+    font-size: 0.9375rem;
+    th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: $fog; font-weight: 600; }
+}
+
+// ---------- Alerts / badges / list-groups ----------
+.alert { border-radius: 1.5px; border: 1px solid $line; }
+.badge { border-radius: 1.5px; font-weight: 600; }
+.list-group-item { border-color: $line; }
+
+// ---------- Dark theme: surfaces contrast-safe ----------
+.dark {
+    .dropdown-menu {
+        background-color: $dk-bg2;
+        border-color: $dk-line;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    .dropdown-item {
+        color: #e6e6e6;
+        &:hover, &:focus { background-color: rgba(255, 255, 255, 0.08); color: #fff; }
+        &.active, &:active { background-color: #fff; color: $ink; }
+    }
+    .modal-content { background-color: $dk-bg; border-color: $dk-line; }
+    .modal-header, .modal-footer { border-color: $dk-line; }
+    .card { background-color: $dk-bg; border-color: $dk-line; }
+    .table { color: #e6e6e6; th { color: $dk-fog; } }
+    .alert { border-color: $dk-line; }
+    .list-group-item { border-color: $dk-line; background-color: $dk-bg; color: #e6e6e6; }
+}

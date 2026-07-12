@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { Modal } from "bootstrap";
+import { Modal } from "../modules/modal.js";
 import Confirm from "./Confirm.vue";
 
 export default {

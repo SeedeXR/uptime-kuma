@@ -85,7 +85,7 @@
 </template>
 
 <script lang="ts">
-import { Modal } from "bootstrap";
+import { Modal } from "../modules/modal.js";
 import dayjs from "dayjs";
 import Datepicker from "@vuepic/vue-datepicker";
 import CopyableInput from "./CopyableInput.vue";

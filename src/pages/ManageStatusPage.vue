@@ -131,7 +131,7 @@ export default {
         background-color: #cdf8f4;
     }
 
-    $logo-width: 70px;
+    $logo-width: 40px;
 
     .logo {
         width: $logo-width;

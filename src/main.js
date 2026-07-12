@@ -1,11 +1,13 @@
-import "bootstrap";
 import "@fontsource-variable/space-grotesk"; // Seede XR brand font (self-hosted)
+import { initDropdowns } from "./modules/dropdown.js";
 import { createApp, h } from "vue";
 import contenteditable from "vue-contenteditable";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import App from "./App.vue";
 import "./assets/app.scss";
+import "./assets/tailwind.css";
+import "./assets/seede-design.scss";
 import "./assets/vue-datepicker.scss";
 import { i18n } from "./i18n";
 import { FontAwesomeIcon } from "./icon.js";
@@ -44,6 +46,9 @@ app.component("Editable", contenteditable);
 app.component("FontAwesomeIcon", FontAwesomeIcon);
 
 app.mount("#app");
+
+// Dropdown behaviour (replaces Bootstrap's JS)
+initDropdowns();
 
 // Service Worker
 // Mainly for Webpush notification

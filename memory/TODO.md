@@ -106,6 +106,17 @@ continue there. Update boxes as you go. **No commits.**
 - [x] Admin brand logo (public/brand-logo-admin.svg) in an always-dark sidebar (fixes white-logo contrast; dark sidebar + light content)
 - [x] Verified: build clean, eslint 0 errors, e2e 10/10, CSP 0 violations; screenshots (dashboard/collapsed/palette) confirm
 
+## Wave 5 — Tailwind design system (full migration)
+- [x] P1 Foundation: Tailwind v4 via @tailwindcss/vite, `@theme` tokens (Space Grotesk, mono palette, 1.5px radius, tightened type scale), preflight OFF to coexist with Bootstrap. Build+e2e green.
+- [x] P2 Primitives: `seede-design.scss` (unlayered, `#app`-prefixed) — type scale, forms/labels, buttons, surfaces, contrast-safe light+dark. Fixed oversized fonts + black-on-black forms + multiselect.
+- [x] P3 Surfaces: dropdowns/modals/cards/tables/alerts/badges/list-groups, contrast-safe light+dark. Verified dark settings.
+- [x] P4 Pages verified premium+contrast-correct (light+dark): login, dashboard, add-monitor, settings ×11, status-page editor, public status page, onboarding, command palette. Token-driven — no bespoke per-page work needed.
+- [x] P5 Notifications: 90+ forms inherit `.form-control`/`.form-label`/`.btn` restyle automatically. Zero per-component edits.
+- [x] P6a Remove Bootstrap JS: native `src/modules/modal.js` + `dropdown.js` (Popper) shims replace `Modal`/`import "bootstrap"`. Verified (modal backdrop/static/dismiss, dropdown flip). @popperjs kept.
+- [x] P6b Remove Bootstrap CSS: owned `src/assets/bootstrap-compat.scss` (grid + used utilities + component structure, brand-tokenised) replaces the bootstrap SCSS import; `bootstrap` dropped from package.json + node_modules + vite chunk. QA'd page-by-page (fixed link colour, btn-check active fill, dark `.num`). eslint+stylelint clean, e2e 10/10.
+- [x] **P6 COMPLETE** — Bootstrap fully removed. Build green with no bootstrap package present.
+- e2e 10/10 throughout; never committed (human commits).
+
 ## Blockers awaiting human
 - Status colours: greyscale vs functional (implemented functional default).
 - CNAME/docs domain.

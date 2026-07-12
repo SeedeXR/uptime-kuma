@@ -1,0 +1,47 @@
+/*
+ * Seede XR design system (Tailwind v4).
+ * During the Bootstrap→Tailwind migration we intentionally SKIP Tailwind's preflight
+ * (base reset) so existing Bootstrap-styled components keep working. We only pull in
+ * the theme (tokens) + utilities. Preflight is added back once Bootstrap is removed.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+    /* Brand typeface */
+    --font-sans: "Space Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* Monochrome palette — white / black / grey, with a contrast-checked grey ramp */
+    --color-ink: #121212; /* primary text / accent */
+    --color-paper: #ffffff; /* surfaces */
+    --color-muted: #c6c6c6; /* brand grey */
+    --color-line: #e6e6e6; /* hairline borders (light) */
+    --color-ink-2: #1a1a1a; /* raised dark surface */
+    --color-ink-3: #2a2a2a; /* dark borders */
+    --color-fog: #6b6b6b; /* secondary text on light (≥4.5:1 on paper) */
+
+    /* Functional status colours (kept legible; monitoring UX) */
+    --color-up: #198754;
+    --color-down: #dc3545;
+    --color-pending: #f8a306;
+    --color-maintenance: #1747f5;
+
+    /* Brand rule: nothing rounder than 1.5px */
+    --radius-xs: 1.5px;
+    --radius-sm: 1.5px;
+    --radius-md: 1.5px;
+    --radius-lg: 1.5px;
+    --radius-xl: 1.5px;
+    --radius-2xl: 1.5px;
+    --radius-3xl: 1.5px;
+
+    /* Tighter, premium type scale (base 15px, was 16; headings smaller than before) */
+    --text-xs: 0.75rem; /* 12 */
+    --text-sm: 0.8125rem; /* 13 */
+    --text-base: 0.9375rem; /* 15 */
+    --text-lg: 1.0625rem; /* 17 */
+    --text-xl: 1.25rem; /* 20 */
+    --text-2xl: 1.5rem; /* 24 */
+    --text-3xl: 1.75rem; /* 28 */
+}

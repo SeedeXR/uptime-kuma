@@ -16,7 +16,6 @@
         <aside v-if="$root.loggedIn && !$root.isMobile" class="sidebar">
             <router-link to="/dashboard" class="sidebar-brand">
                 <img src="/icon.svg" alt="Seede XR" class="brand-icon" />
-                <span v-if="!sidebarCollapsed" class="brand-name">Seede XR</span>
             </router-link>
 
             <button class="sidebar-search" :title="$t('Search')" @click="openCommandPalette">
@@ -290,25 +289,17 @@ $sidebar-width-collapsed: 74px;
 .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 11px;
+    justify-content: center;
     padding: 6px 10px 20px;
     min-height: 52px;
     text-decoration: none;
 
     .brand-icon {
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         flex-shrink: 0;
         // Force the glyph to solid white on the dark sidebar, independent of OS theme
         filter: brightness(0) invert(1);
-    }
-
-    .brand-name {
-        font-size: 34px;
-        line-height: 34px; // match the 34px icon height
-        font-weight: 400;
-        letter-spacing: 0.5px;
-        color: #fff;
     }
 }
 
