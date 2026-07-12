@@ -174,7 +174,7 @@
 </template>
 
 <script>
-import { Modal } from "bootstrap";
+import { Modal } from "../modules/modal.js";
 import VueMultiselect from "vue-multiselect";
 import { colorOptions } from "../util-frontend";
 import Tag from "../components/Tag.vue";

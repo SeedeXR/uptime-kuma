@@ -228,6 +228,12 @@ app.use(function (req, res, next) {
         "connect-src 'self' ws: wss: https:",
         "object-src 'self'",
         "base-uri 'self'",
+        // Directives that do NOT inherit from default-src — set explicitly (ZAP 10055).
+        // All same-origin: the service worker + PWA manifest are served from this origin.
+        "form-action 'self'",
+        "frame-src 'self'",
+        "worker-src 'self'",
+        "manifest-src 'self'",
     ];
     if (!disableFrameSameOrigin) {
         res.setHeader("X-Frame-Options", "SAMEORIGIN");

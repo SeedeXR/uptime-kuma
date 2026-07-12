@@ -1,10 +1,10 @@
 import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
-import visualizer from "rollup-plugin-visualizer";
+import tailwindcss from "@tailwindcss/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 import viteCompression from "vite-plugin-compression";
-
-const postCssScss = require("postcss-scss");
-const postcssRTLCSS = require("postcss-rtlcss");
+import postCssScss from "postcss-scss";
+import postcssRTLCSS from "postcss-rtlcss";
 
 const viteCompressionFilter = /\.(js|mjs|json|css|html|svg)$/i;
 
@@ -19,6 +19,7 @@ export default defineConfig({
     },
     plugins: [
         vue(),
+        tailwindcss(),
         visualizer({
             filename: "tmp/dist-stats.html",
         }),
@@ -53,9 +54,6 @@ export default defineConfig({
                     }
                     if (/[\\/]node_modules[\\/](vue|@vue|vue-router|vue-i18n|vue-toastification|vuedraggable)[\\/]/.test(id)) {
                         return "vendor-vue";
-                    }
-                    if (/[\\/]node_modules[\\/]bootstrap[\\/]/.test(id)) {
-                        return "vendor-bootstrap";
                     }
                     if (/[\\/]node_modules[\\/](dayjs|axios|mitt|nanoid|jwt-decode|qs)[\\/]/.test(id)) {
                         return "vendor-core";

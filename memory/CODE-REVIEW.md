@@ -41,3 +41,29 @@ the codebase scopes monitors by `user_id`. To make added admins **co-manage the 
 monitors** (likely the real intent), remove the `user_id` filter from `getMonitorJSONList`
 and the monitor edit/pause/resume/delete queries (every user is already an admin). That is
 a deliberate data-access broadening — left for explicit sign-off.
+
+## Wave 5 review — P6 Bootstrap removal (2026-07-12)
+Reviewed the new code (modal.js, dropdown.js, bootstrap-compat.scss) + UI tweaks.
+
+**Code review (fixed):**
+1. Sass `/`-division deprecation in the grid (`percentage($i/12)`) — breaks in Dart Sass 2.0.
+   Replaced with CSS `calc(#{$i} * 100% / 12)`. No more deprecation warnings.
+2. Dropped Bootstrap reboot essentials (body margin/line-height, heading/`p`/list margins,
+   `table{border-collapse}`, `svg{vertical-align:middle}`, `small`). Restored in compat's
+   reboot block (colour/bg intentionally left to the theme layer to avoid dark-mode conflicts).
+
+**Ponytail review (fixed):**
+3. CORRECTNESS GAP: the static class inventory missed dynamic `:class="'bg-'+style"` — incident
+   banners build `bg-{info,warning,danger,primary,light,dark}` at runtime; compat lacked
+   `bg-info/light/dark` (Bootstrap used to supply them). Added. (`text-maintenance`/`bg-maintenance`
+   are owned by app.scss — verified present.)
+4. Removed duplicate `.bg-maintenance` from compat (app.scss owns it).
+5. Removed dead `dispose()` + unused `export default` from modal.js (all imports are named).
+
+**Security (ZAP baseline, 0 FAIL / 60 PASS / 7 WARN):** fixed CSP no-fallback directives
+(form-action/frame-src/worker-src/manifest-src, all 'self'); rest are accepted trade-offs
+(see SECURITY-AUDIT.md). No High/Med; nothing P6-introduced.
+
+**Tests:** build ✓, lint:prod ✓ (0 errors), check-translations ✓, fast-logic backend 60/60 ✓
+(incl. seede-email + status-page), e2e 10/10 ✓ (incl. under tightened CSP). Full container
+backend suite: run separately (Testcontainers image pulls are slow locally).

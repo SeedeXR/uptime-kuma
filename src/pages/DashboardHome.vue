@@ -313,6 +313,11 @@ export default {
     color: $primary;
     font-weight: bold;
     display: block;
+
+    // Dark mode: $primary is near-black — invert to white so the count stays legible.
+    .dark & {
+        color: #fff;
+    }
 }
 
 .shadow-box {

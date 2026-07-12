@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts">
-import { Modal } from "bootstrap";
+import { Modal } from "../modules/modal.js";
 
 export default {
     props: {

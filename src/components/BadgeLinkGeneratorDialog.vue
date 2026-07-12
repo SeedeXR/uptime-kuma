@@ -213,7 +213,7 @@
 </template>
 
 <script lang="ts">
-import { Modal } from "bootstrap";
+import { Modal } from "../modules/modal.js";
 import CopyableInput from "./CopyableInput.vue";
 import { badgeConstants } from "../util.ts";
 

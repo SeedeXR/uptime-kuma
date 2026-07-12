@@ -1,0 +1,805 @@
+// Seede XR — Bootstrap compatibility layer.
+//
+// Replaces `@import "bootstrap/scss/bootstrap"`. Reproduces ONLY the Bootstrap 5.1.3
+// CSS this codebase actually uses (grid + the utility set inventoried during the
+// migration + component *structure*), tokenised to the brand (1.5px radius, brand
+// palette). Component *skins* (colours, borders, contrast, dark theme) live in
+// seede-design.scss / app.scss, which load later and win on conflicts — this file only
+// provides the structural base those overrides assume (positioning, display, layout).
+//
+// The `bootstrap` npm package is removed; nothing here imports it. Fiddly form-control
+// internals (check/radio/switch, select caret, close X, spinner) copy Bootstrap's exact
+// rules (MIT-licensed) for pixel fidelity.
+
+@import "vars.scss";
+
+// ---- Palette (brand overrides + Bootstrap defaults for the rest) ----
+$secondary: #6c757d;
+$success: #198754;
+$info: #0dcaf0;
+$light: #f8f9fa;
+$dark: #212529;
+$body-color: #212529;
+$border-color-bs: #dee2e6;
+$input-border: #ced4da;
+
+$grid-gutter: 1.5rem;
+$spacers: (0: 0, 1: 0.25rem, 2: 0.5rem, 3: 1rem, 4: 1.5rem, 5: 3rem);
+$breakpoints: (sm: 576px, md: 768px, lg: 992px, xl: 1200px, xxl: 1400px);
+$containers: (sm: 540px, md: 720px, lg: 960px, xl: 1140px, xxl: 1320px);
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+// ============================================================
+// Grid
+// ============================================================
+.container,
+.container-fluid {
+    width: 100%;
+    padding-right: calc(#{$grid-gutter} * 0.5);
+    padding-left: calc(#{$grid-gutter} * 0.5);
+    margin-right: auto;
+    margin-left: auto;
+}
+@each $bp, $w in $containers {
+    @media (min-width: map-get($breakpoints, $bp)) {
+        .container {
+            max-width: $w;
+        }
+    }
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 0;
+    margin-right: calc(-0.5 * #{$grid-gutter});
+    margin-left: calc(-0.5 * #{$grid-gutter});
+
+    > * {
+        flex-shrink: 0;
+        width: 100%;
+        max-width: 100%;
+        padding-right: calc(#{$grid-gutter} * 0.5);
+        padding-left: calc(#{$grid-gutter} * 0.5);
+        margin-top: 0;
+    }
+}
+.row.gx-0 {
+    margin-right: 0;
+    margin-left: 0;
+    > * {
+        padding-right: 0;
+        padding-left: 0;
+    }
+}
+
+// Column helpers, generated for base + each breakpoint.
+@mixin cols($infix: "") {
+    .col#{$infix} {
+        flex: 1 0 0%;
+    }
+    @for $i from 1 through 12 {
+        .col#{$infix}-#{$i} {
+            flex: 0 0 auto;
+            width: calc(#{$i} * 100% / 12); // CSS calc avoids the deprecated Sass `/` division
+        }
+    }
+}
+@include cols();
+@each $bp, $min in $breakpoints {
+    @media (min-width: $min) {
+        @include cols("-#{$bp}");
+    }
+}
+
+// ============================================================
+// Reboot essentials (Bootstrap 5.1.3 reboot, trimmed to what the app relies on)
+// ============================================================
+// Colour/background are intentionally omitted here — the theme (app.scss `.dark`,
+// seede-design.scss) owns those; we only restore the structural resets Bootstrap
+// provided (no body gap, 1.5 line-height, element margins, collapsed tables).
+body {
+    margin: 0;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+p {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+hr {
+    margin: 1rem 0;
+    color: inherit;
+    background-color: currentColor;
+    border: 0;
+    opacity: 0.25;
+    &:not([size]) {
+        height: 1px;
+    }
+}
+ul,
+ol {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+table {
+    border-collapse: collapse;
+}
+th {
+    text-align: inherit;
+    text-align: -webkit-match-parent;
+}
+svg {
+    vertical-align: middle;
+}
+small {
+    font-size: 0.875em;
+}
+a {
+    color: $link-color;
+    text-decoration: underline;
+    &:hover { color: darken($link-color, 15%); }
+}
+a:not([href]):not([class]),
+a:not([href]):not([class]):hover {
+    color: inherit;
+    text-decoration: none;
+}
+button {
+    border-radius: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+    -webkit-appearance: button;
+}
+:not(:disabled) {
+    cursor: auto;
+}
+
+// ============================================================
+// Utilities (the inventoried set)
+// ============================================================
+// Spacing: m/p × (t,b,s,e,x,y,·) × scale, plus -auto.
+$sides: ("": "", "t": "-top", "b": "-bottom", "s": "-left", "e": "-right");
+@each $sabbr, $sprop in $sides {
+    @each $k, $v in $spacers {
+        .m#{$sabbr}-#{$k} { margin#{$sprop}: $v !important; }
+        .p#{$sabbr}-#{$k} { padding#{$sprop}: $v !important; }
+    }
+}
+@each $k, $v in $spacers {
+    .mx-#{$k} { margin-right: $v !important; margin-left: $v !important; }
+    .my-#{$k} { margin-top: $v !important; margin-bottom: $v !important; }
+    .px-#{$k} { padding-right: $v !important; padding-left: $v !important; }
+    .py-#{$k} { padding-top: $v !important; padding-bottom: $v !important; }
+}
+.m-auto { margin: auto !important; }
+.mx-auto { margin-right: auto !important; margin-left: auto !important; }
+.ms-auto { margin-left: auto !important; }
+.me-auto { margin-right: auto !important; }
+
+// Display (base + responsive variants used)
+$displays: (
+    "d-none": none, "d-block": block, "d-inline-block": inline-block,
+    "d-inline-flex": inline-flex, "d-flex": flex, "d-inline": inline,
+);
+@each $cls, $val in $displays {
+    .#{$cls} { display: $val !important; }
+}
+@media (min-width: map-get($breakpoints, sm)) {
+    .d-sm-block { display: block !important; }
+    .d-sm-none { display: none !important; }
+    .d-sm-flex { display: flex !important; }
+}
+@media (min-width: map-get($breakpoints, lg)) {
+    .d-lg-none { display: none !important; }
+    .d-lg-inline { display: inline !important; }
+    .d-lg-block { display: block !important; }
+    .d-lg-flex { display: flex !important; }
+}
+
+// Flex
+.flex-row { flex-direction: row !important; }
+.flex-column { flex-direction: column !important; }
+.flex-wrap { flex-wrap: wrap !important; }
+.flex-fill { flex: 1 1 auto !important; }
+.flex-grow-1 { flex-grow: 1 !important; }
+.flex-shrink-0 { flex-shrink: 0 !important; }
+.justify-content-start { justify-content: flex-start !important; }
+.justify-content-center { justify-content: center !important; }
+.justify-content-between { justify-content: space-between !important; }
+.justify-content-end { justify-content: flex-end !important; }
+.align-items-start { align-items: flex-start !important; }
+.align-items-center { align-items: center !important; }
+.align-items-end { align-items: flex-end !important; }
+.gap-1 { gap: 0.25rem !important; }
+.gap-2 { gap: 0.5rem !important; }
+.gap-3 { gap: 1rem !important; }
+
+// Sizing / position / overflow / border
+.w-50 { width: 50% !important; }
+.w-100 { width: 100% !important; }
+.h-100 { height: 100% !important; }
+.mw-100 { max-width: 100% !important; }
+.position-relative { position: relative !important; }
+.position-absolute { position: absolute !important; }
+.overflow-hidden { overflow: hidden !important; }
+.overflow-auto { overflow: auto !important; }
+.border-0 { border: 0 !important; }
+.border-bottom { border-bottom: 1px solid $border-color-bs !important; }
+.rounded { border-radius: 1.5px !important; }
+.rounded-pill { border-radius: 1.5px !important; } // brand rule: nothing rounder than 1.5px
+
+// Text
+.text-start { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-end { text-align: right !important; }
+.text-nowrap { white-space: nowrap !important; }
+.text-break { word-wrap: break-word !important; word-break: break-word !important; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.text-decoration-none { text-decoration: none !important; }
+.fw-normal { font-weight: 400 !important; }
+.fw-bold { font-weight: 700 !important; }
+.fst-italic { font-style: italic !important; }
+.lh-1 { line-height: 1 !important; }
+
+// Colour utilities (functional colours kept; text-* / bg-*)
+.text-primary { color: $primary !important; }
+.text-secondary { color: $secondary !important; }
+.text-muted { color: $secondary !important; }
+.text-success { color: $success !important; }
+.text-danger { color: $danger !important; }
+.text-warning { color: $warning !important; }
+.text-info { color: $info !important; }
+.text-dark { color: $dark !important; }
+.text-white { color: #fff !important; }
+// bg-* — incident banners build these dynamically via `bg-${style}` where style is one
+// of info/warning/danger/primary/light/dark; status badges use bg-{success,danger,…}.
+.bg-primary { background-color: $primary !important; }
+.bg-secondary { background-color: $secondary !important; }
+.bg-success { background-color: $success !important; }
+.bg-danger { background-color: $danger !important; }
+.bg-warning { background-color: $warning !important; }
+.bg-info { background-color: $info !important; }
+.bg-light { background-color: $light !important; }
+.bg-dark { background-color: $dark !important; }
+.bg-transparent { background-color: transparent !important; }
+// .bg-maintenance (+ its white text) is owned by app.scss.
+
+.visually-hidden,
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+// ============================================================
+// Components — structural base (skins live in seede-design.scss)
+// ============================================================
+
+// ---- Buttons ----
+.btn {
+    display: inline-block;
+    font-weight: 400;
+    line-height: 1.5;
+    color: $body-color;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    border-radius: 1.5px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+    &:disabled,
+    &.disabled {
+        pointer-events: none;
+        opacity: 0.65;
+    }
+}
+@mixin btn-solid($bg, $fg: #fff) {
+    color: $fg;
+    background-color: $bg;
+    border-color: $bg;
+    &:hover,
+    &:focus,
+    &:active {
+        color: $fg;
+        background-color: darken($bg, 7.5%);
+        border-color: darken($bg, 10%);
+    }
+}
+@mixin btn-outline($c) {
+    color: $c;
+    border-color: $c;
+    background-color: transparent;
+    &:hover,
+    &:focus,
+    &:active {
+        color: #fff;
+        background-color: $c;
+        border-color: $c;
+    }
+}
+.btn-primary { @include btn-solid($primary); }
+.btn-secondary { @include btn-solid($secondary); }
+.btn-success { @include btn-solid($success); }
+.btn-danger { @include btn-solid($danger); }
+.btn-warning { @include btn-solid($warning, #212529); }
+.btn-info { @include btn-solid($info, #212529); }
+.btn-light { @include btn-solid($light, #212529); }
+.btn-dark { @include btn-solid($dark); }
+.btn-outline-primary { @include btn-outline($primary); }
+.btn-outline-secondary { @include btn-outline($secondary); }
+.btn-outline-danger { @include btn-outline($danger); }
+.btn-outline-info { @include btn-outline($info); }
+.btn-link {
+    font-weight: 400;
+    color: $link-color;
+    text-decoration: underline;
+    background-color: transparent;
+    border: none;
+    &:hover { color: darken($link-color, 15%); }
+}
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 1.5px; }
+.btn-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+// Toggle-button groups: a checked/active radio fills its adjacent label (Bootstrap parity).
+// Components (e.g. Appearance.vue) layer text-colour on top of this fill.
+@each $name, $c in ("primary": $primary, "secondary": $secondary, "danger": $danger, "info": $info) {
+    .btn-check:checked + .btn-outline-#{$name},
+    .btn-check:active + .btn-outline-#{$name} {
+        color: #fff;
+        background-color: $c;
+        border-color: $c;
+    }
+}
+.btn-group {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    > .btn { position: relative; flex: 1 1 auto; }
+}
+
+// ---- Close button ----
+.btn-close {
+    box-sizing: content-box;
+    width: 1em;
+    height: 1em;
+    padding: 0.25em 0.25em;
+    color: #000;
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+    border: 0;
+    border-radius: 1.5px;
+    opacity: 0.5;
+    cursor: pointer;
+    &:hover { opacity: 0.75; }
+}
+
+// ---- Forms ----
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: $body-color;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid $input-border;
+    border-radius: 1.5px;
+    appearance: none;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.form-select {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: $body-color;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    border: 1px solid $input-border;
+    border-radius: 1.5px;
+    appearance: none;
+}
+.form-label { margin-bottom: 0.5rem; }
+.form-text { margin-top: 0.25rem; font-size: 0.875em; color: $secondary; }
+.col-form-label { padding-top: calc(0.375rem + 1px); padding-bottom: calc(0.375rem + 1px); margin-bottom: 0; line-height: 1.5; }
+
+// Checks / radios / switches
+.form-check {
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 1.5em;
+    margin-bottom: 0.125rem;
+    .form-check-input { float: left; margin-left: -1.5em; }
+}
+.form-check-inline { display: inline-block; margin-right: 1rem; }
+.form-check-input {
+    width: 1em;
+    height: 1em;
+    margin-top: 0.25em;
+    vertical-align: top;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    appearance: none;
+    -webkit-appearance: none;
+    print-color-adjust: exact;
+    cursor: pointer;
+    &[type="checkbox"] { border-radius: 1.5px; }
+    &[type="radio"] { border-radius: 50%; }
+    &:checked {
+        background-color: $primary;
+        border-color: $primary;
+    }
+    &:checked[type="checkbox"] {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    }
+    &:checked[type="radio"] {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e");
+    }
+    &:focus {
+        border-color: $primary;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(18, 18, 18, 0.15);
+    }
+    &:disabled { pointer-events: none; filter: none; opacity: 0.5; }
+}
+.form-switch {
+    padding-left: 2.5em;
+    .form-check-input {
+        width: 2em;
+        margin-left: -2.5em;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e");
+        background-position: left center;
+        border-radius: 2em;
+        transition: background-position 0.15s ease-in-out;
+    }
+    .form-check-input:checked {
+        background-position: right center;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    }
+}
+.form-check-label { cursor: pointer; }
+
+.form-floating {
+    position: relative;
+    > .form-control,
+    > .form-select { height: calc(3.5rem + 2px); line-height: 1.25; padding: 1rem 0.75rem; }
+    > label {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        padding: 1rem 0.75rem;
+        pointer-events: none;
+        border: 1px solid transparent;
+        transform-origin: 0 0;
+        transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+    }
+    > .form-control:focus ~ label,
+    > .form-control:not(:placeholder-shown) ~ label,
+    > .form-select ~ label {
+        opacity: 0.65;
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+    > .form-control,
+    > .form-select {
+        position: relative;
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+    }
+    // seams: collapse adjacent radii between grouped controls
+    > :not(:first-child) { margin-left: -1px; }
+}
+.input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: $body-color;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #e9ecef;
+    border: 1px solid $input-border;
+    border-radius: 1.5px;
+}
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: $danger;
+}
+.is-invalid ~ .invalid-feedback { display: block; }
+.form-control.is-invalid,
+.form-select.is-invalid,
+.was-validated .form-control:invalid { border-color: $danger; }
+
+// ---- Nav ----
+.nav-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: $link-color;
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+    &:hover,
+    &:focus { color: darken($link-color, 15%); }
+}
+
+// ---- Dropdown ----
+.dropdown,
+.dropup { position: relative; }
+.dropdown-toggle {
+    white-space: nowrap;
+    &::after {
+        display: inline-block;
+        margin-left: 0.255em;
+        vertical-align: 0.255em;
+        content: "";
+        border-top: 0.3em solid;
+        border-right: 0.3em solid transparent;
+        border-bottom: 0;
+        border-left: 0.3em solid transparent;
+    }
+}
+.dropdown-menu {
+    position: absolute;
+    z-index: 1000;
+    display: none;
+    min-width: 10rem;
+    padding: 0.5rem 0;
+    margin: 0;
+    font-size: 1rem;
+    color: $body-color;
+    text-align: left;
+    list-style: none;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 1.5px;
+    &.show { display: block; }
+}
+.dropdown-menu-end { right: 0; left: auto; }
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.25rem 1rem;
+    clear: both;
+    font-weight: 400;
+    color: $body-color;
+    text-align: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    &:hover,
+    &:focus { color: #1e2125; background-color: #e9ecef; }
+}
+.dropdown-item-text { display: block; padding: 0.25rem 1rem; color: $body-color; }
+.dropdown-divider {
+    height: 0;
+    margin: 0.5rem 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+// ---- Modal ----
+.modal-open { overflow: hidden; }
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1055;
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+}
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 0.5rem;
+    pointer-events: none;
+}
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+.modal.show .modal-dialog { transform: none; }
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+@media (min-width: 576px) {
+    .modal-dialog { max-width: 500px; margin: 1.75rem auto; }
+    .modal-dialog-centered { min-height: calc(100% - 3.5rem); }
+}
+@media (min-width: 1200px) {
+    .modal-xl { max-width: 1140px; }
+}
+.modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    pointer-events: auto;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 1.5px;
+    outline: 0;
+}
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 1rem 1rem;
+    border-bottom: 1px solid $border-color-bs;
+}
+.modal-title { margin-bottom: 0; line-height: 1.5; }
+.modal-body { position: relative; flex: 1 1 auto; padding: 1rem; }
+.modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0.75rem;
+    border-top: 1px solid $border-color-bs;
+    > * { margin: 0.25rem; }
+}
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    transition: opacity 0.15s linear;
+    &.fade { opacity: 0; }
+    &.show { opacity: 0.5; }
+}
+
+// ---- Card ----
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 1.5px;
+}
+.card-body { flex: 1 1 auto; padding: 1rem 1rem; }
+
+// ---- Alert ----
+.alert {
+    position: relative;
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 1.5px;
+}
+.alert-heading { color: inherit; }
+.alert-success { color: #0f5132; background-color: #d1e7dd; border-color: #badbcc; }
+.alert-danger { color: #842029; background-color: #f8d7da; border-color: #f5c2c7; }
+.alert-warning { color: #664d03; background-color: #fff3cd; border-color: #ffecb5; }
+.alert-info { color: #055160; background-color: #cff4fc; border-color: #b6effb; }
+
+// ---- List group ----
+.list-group {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0;
+    margin-bottom: 0;
+    border-radius: 1.5px;
+}
+.list-group-item {
+    position: relative;
+    display: block;
+    padding: 0.5rem 1rem;
+    color: $body-color;
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    + .list-group-item { border-top-width: 0; }
+}
+
+// ---- Table ----
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: $body-color;
+    vertical-align: top;
+    border-color: $border-color-bs;
+
+    > :not(caption) > * > * {
+        padding: 0.5rem 0.5rem;
+        border-bottom: 1px solid $border-color-bs;
+    }
+    > thead { vertical-align: bottom; }
+}
+.table-borderless > :not(caption) > * > * { border-bottom-width: 0; }
+.table-hover > tbody > tr:hover > * { background-color: rgba(0, 0, 0, 0.04); }
+
+// ---- Badge ----
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 1.5px;
+}
+
+// ---- Spinner ----
+@keyframes spinner-border { to { transform: rotate(360deg); } }
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: -0.125em;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: 0.75s linear infinite spinner-border;
+}
+.spinner-border-sm { width: 1rem; height: 1rem; border-width: 0.2em; }

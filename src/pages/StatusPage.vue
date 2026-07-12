@@ -485,8 +485,7 @@
 
             <div class="mb-4">
                 <div v-if="$root.publicGroupList.length === 0 && loadedData" class="text-center">
-                    <!-- 👀 Nothing here, please add a group or a monitor. -->
-                    👀 {{ $t("statusPageNothing") }}
+                    {{ $t("statusPageNothing") }}
                 </div>
 
                 <PublicGroupList
@@ -571,7 +570,7 @@
 
                 <p v-if="config.showPoweredBy" data-testid="powered-by">
                     {{ $t("Powered by") }}
-                    <a target="_blank" rel="noopener noreferrer" href="https://github.com/louislam/uptime-kuma">
+                    <a target="_blank" rel="noopener noreferrer" href="https://github.com/SeedeXR">
                         {{ $t("Seede XR") }}
                     </a>
                 </p>
@@ -1518,8 +1517,8 @@ h1 {
 
     img {
         vertical-align: middle;
-        height: 60px;
-        width: 60px;
+        height: 40px;
+        width: 40px;
     }
 }
 
