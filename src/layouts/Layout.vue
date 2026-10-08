@@ -404,6 +404,11 @@ $sidebar-width-collapsed: 74px;
         color: $dark-font-color;
         border-color: $dark-border-color;
 
+        // "Signed in as …" line: same white as the menu, not the light-theme body grey
+        .dropdown-item-text {
+            color: #fff;
+        }
+
         .dropdown-item {
             color: $dark-font-color;
 
