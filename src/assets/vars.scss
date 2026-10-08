@@ -3,13 +3,13 @@
 // Accent ($primary) is brand black; functional status colours kept legible.
 $primary: #121212;        // brand accent (buttons, links, active) — light theme
 $link-color: #121212;
-// brand rule: no component rounder than 1.5px — set every Bootstrap radius var
-$border-radius: 1.5px;
-$border-radius-sm: 1.5px;
-$border-radius-lg: 1.5px;
-$border-radius-pill: 1.5px;
+// 2.5px radius everywhere. Runtime values live in the --ui-radius* CSS vars (app.scss).
+$border-radius: 2.5px;
+$border-radius-sm: 2.5px;
+$border-radius-lg: 2.5px;
+$border-radius-pill: 2.5px;
 $secondary-text: #c6c6c6; // brand grey
-$dropdown-border-radius: 1.5px;
+$dropdown-border-radius: 2.5px;
 
 // Functional status colours (monitoring UX — must stay distinguishable).
 // "up/ok" now maps to Bootstrap $success (green); see Status.vue / Uptime.vue / HeartbeatBar.vue.

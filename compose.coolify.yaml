@@ -8,6 +8,11 @@ services:
       context: .
       dockerfile: docker/Dockerfile.seede
     restart: unless-stopped
+    environment:
+      # First admin, created on boot if missing (never overwritten). Set the password
+      # as a secret in Coolify → Environment Variables; it is not stored in git.
+      - SEEDE_ADMIN_USERNAME=${SEEDE_ADMIN_USERNAME:-a.mkwizu@seedexr.com}
+      - SEEDE_ADMIN_PASSWORD=${SEEDE_ADMIN_PASSWORD}
     volumes:
       # MUST be persistent — holds SQLite DB, db-config.json, uploads, screenshots.
       # Without it, every redeploy wipes data and re-runs the setup wizard.

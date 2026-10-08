@@ -3,6 +3,8 @@ const passwordHash = require("../password-hash");
 const { R } = require("redbean-node");
 const jwt = require("jsonwebtoken");
 const { shake256, SHAKE256_LENGTH } = require("../util-server");
+const { passwordStrength } = require("check-password-strength");
+const { log } = require("../../src/util");
 
 class User extends BeanModel {
     /**
@@ -17,6 +19,32 @@ class User extends BeanModel {
             await passwordHash.generate(newPassword),
             userID,
         ]);
+    }
+
+    /**
+     * Create the admin named in SEEDE_ADMIN_USERNAME / SEEDE_ADMIN_PASSWORD (deploy secrets)
+     * if no user with that username exists yet. Never updates an existing user, so a
+     * password changed in Settings is not reset on the next deploy.
+     * @param {object} env Environment, usually process.env
+     * @returns {Promise<boolean>} true if a user was created
+     */
+    static async ensureAdminFromEnv(env) {
+        const username = (env.SEEDE_ADMIN_USERNAME || "").trim();
+        if (!username || (await R.findOne("user", " username = ? ", [username]))) {
+            return false;
+        }
+        const password = env.SEEDE_ADMIN_PASSWORD || "";
+        if (passwordStrength(password).value === "Too weak") {
+            log.error("server", `SEEDE_ADMIN_PASSWORD is missing or too weak; admin ${username} was not created`);
+            return false;
+        }
+        const user = R.dispense("user");
+        user.username = username;
+        user.password = await passwordHash.generate(password);
+        user.active = true;
+        await R.store(user);
+        log.info("server", `Created admin ${username} from SEEDE_ADMIN_USERNAME`);
+        return true;
     }
 
     /**

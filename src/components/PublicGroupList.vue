@@ -30,7 +30,7 @@
                 </h2>
 
                 <transition name="slide-fade-up">
-                    <div v-if="!isGroupCollapsed(group.element)" class="shadow-box monitor-list mt-4 position-relative">
+                    <div v-if="!isGroupCollapsed(group.element)" class="shadow-box monitor-list mt-3 position-relative">
                         <div v-if="group.element.monitorList.length === 0" class="text-center no-monitor-msg">
                             {{ $t("No Monitors") }}
                         </div>
@@ -70,11 +70,13 @@
                                                     data-testid="monitor-settings"
                                                     @click="$refs.monitorSettingDialog.show(group, monitor)"
                                                 />
-                                                <Status
-                                                    v-if="showOnlyLastHeartbeat"
-                                                    :status="statusOfLastHeartbeat(monitor.element.id)"
-                                                />
-                                                <Uptime v-else :monitor="monitor.element" type="24" :pill="true" />
+                                                <template v-if="editMode">
+                                                    <Status
+                                                        v-if="showOnlyLastHeartbeat"
+                                                        :status="statusOfLastHeartbeat(monitor.element.id)"
+                                                    />
+                                                    <Uptime v-else :monitor="monitor.element" type="24" :pill="true" />
+                                                </template>
                                                 <a
                                                     v-if="showLink(monitor)"
                                                     :href="monitor.element.url"
@@ -115,10 +117,23 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div :key="$root.userHeartbeatBar" class="col-3 col-xl-6">
+                                        <div v-if="editMode" :key="$root.userHeartbeatBar" class="col-3 col-xl-6">
                                             <HeartbeatBar size="mid" :monitor-id="monitor.element.id" />
                                         </div>
+                                        <div v-else class="col-3 col-xl-6 text-end">
+                                            <span
+                                                class="status-label"
+                                                :class="statusLabel(monitor.element.id).level"
+                                                data-testid="monitor-status"
+                                            >
+                                                {{ $t(statusLabel(monitor.element.id).text) }}
+                                            </span>
+                                        </div>
                                     </div>
+                                    <DailyUptimeBar
+                                        v-if="!editMode && !showOnlyLastHeartbeat"
+                                        :days="$root.dailyUptimeList[monitor.element.id]"
+                                    />
                                 </div>
                             </template>
                         </Draggable>
@@ -134,6 +149,8 @@
 import MonitorSettingDialog from "./MonitorSettingDialog.vue";
 import Draggable from "vuedraggable";
 import HeartbeatBar from "./HeartbeatBar.vue";
+import DailyUptimeBar from "./DailyUptimeBar.vue";
+import { DOWN, UP, PENDING, MAINTENANCE } from "../util.ts";
 import Uptime from "./Uptime.vue";
 import Tag from "./Tag.vue";
 import Status from "./Status.vue";
@@ -143,6 +160,7 @@ export default {
         MonitorSettingDialog,
         Draggable,
         HeartbeatBar,
+        DailyUptimeBar,
         Uptime,
         Tag,
         Status,
@@ -296,6 +314,26 @@ export default {
         },
 
         /**
+         * Public label for a monitor's current state, Statuspage-style wording
+         * @param {number} monitorId Id of the monitor
+         * @returns {{text: string, level: string}} Label text key and colour level
+         */
+        statusLabel(monitorId) {
+            switch (this.statusOfLastHeartbeat(monitorId)) {
+                case UP:
+                    return { text: "Operational", level: "up" };
+                case DOWN:
+                    return { text: "Major Outage", level: "down" };
+                case PENDING:
+                    return { text: "Degraded Performance", level: "partial" };
+                case MAINTENANCE:
+                    return { text: "Maintenance", level: "maintenance" };
+                default:
+                    return { text: "Unknown", level: "none" };
+            }
+        },
+
+        /**
          * Returns certificate expiry color based on days remaining
          * @param {object} monitor Monitor to show expiry for
          * @returns {string} Color for certificate expiry
@@ -379,6 +417,10 @@ export default {
 }
 
 .group-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0;
+
     span {
         display: inline-block;
         min-width: 15px;
@@ -408,5 +450,54 @@ export default {
 
 .bg-maintenance {
     background-color: $maintenance;
+}
+
+// Public view: Statuspage-style component rows inside one rounded card per group
+.shadow-box.monitor-list {
+    padding: 4px 0;
+}
+
+.monitor-list .item {
+    padding: 20px 24px;
+    border-radius: 0;
+
+    & + .item {
+        border-top: 1px solid var(--status-line);
+    }
+
+    &:hover {
+        background-color: transparent;
+    }
+
+    .item-name {
+        font-weight: 600;
+        padding-left: 0;
+    }
+
+    .daily-uptime {
+        margin-top: 14px;
+    }
+}
+
+.status-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--status-muted);
+
+    &.up {
+        color: var(--status-up);
+    }
+
+    &.partial {
+        color: var(--status-partial);
+    }
+
+    &.down {
+        color: var(--status-down);
+    }
+
+    &.maintenance {
+        color: var(--status-maintenance);
+    }
 }
 </style>

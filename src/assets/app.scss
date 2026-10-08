@@ -19,6 +19,27 @@
         noto color emoji;
 }
 
+:root {
+    // One radius everywhere (owner spec: 2.5px). Two vars kept so controls/surfaces can diverge later.
+    --ui-radius-sm: 2.5px; // controls: buttons, inputs, list rows
+    --ui-radius: 2.5px; // surfaces: cards, panels, alerts
+
+    // Public status page colours (Statuspage-style)
+    --status-up: #22c55e;
+    --status-partial: #f59e0b;
+    --status-down: #ef4444;
+    --status-maintenance: #3b82f6;
+    --status-none: #e4e4e7;
+    --status-muted: #71717a;
+    --status-line: #e4e4e7;
+}
+
+.dark {
+    --status-none: #27272a;
+    --status-muted: #a1a1aa;
+    --status-line: #27272a;
+}
+
 h1 {
     font-size: 32px;
 }
@@ -44,7 +65,7 @@ h2 {
 }
 
 textarea.form-control {
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
 }
 
 ::-webkit-scrollbar {
@@ -70,7 +91,7 @@ textarea.form-control {
 }
 
 .list-group {
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius);
 
     .dark & {
         .list-group-item {
@@ -101,7 +122,7 @@ optgroup {
 // Scrollbar
 ::-webkit-scrollbar-thumb {
     background: #ccc;
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
 }
 
 .modal {
@@ -109,7 +130,7 @@ optgroup {
 }
 
 .modal-content {
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius);
     box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
 
     .dark & {
@@ -126,11 +147,11 @@ optgroup {
 .shadow-box {
     //overflow: hidden;   // Forget why add this, but multiple select hide by this
     box-shadow: 0 15px 70px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    border-radius: 1.5px;
+    padding: 16px;
+    border-radius: var(--ui-radius);
 
     &.big-padding {
-        padding: 20px;
+        padding: 28px;
     }
 }
 
@@ -140,7 +161,7 @@ optgroup {
 }
 
 .btn-sm {
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
 }
 
 .btn-primary {
@@ -214,7 +235,7 @@ optgroup {
 .btn-outline-normal {
     padding: 4px 10px;
     border: 1px solid #ced4da;
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
     background-color: transparent;
 
     .dark & {
@@ -543,7 +564,7 @@ optgroup {
         display: block;
         text-decoration: none;
         padding: 13px 15px 10px 15px;
-        border-radius: 1.5px;
+        border-radius: var(--ui-radius-sm);
         transition: all ease-in-out 0.15s;
 
         &.disabled {
@@ -596,7 +617,7 @@ optgroup {
 [contenteditable="true"] {
     transition: all $easing-in 0.2s;
     background-color: rgba(239, 239, 239, 0.7);
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
 
     &.no-bg {
         background-color: transparent !important;
@@ -635,7 +656,7 @@ optgroup {
 }
 
 .vue-image-crop-upload .vicp-wrap {
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
 }
 
 .spinner {
@@ -665,7 +686,7 @@ h5.settings-subheading::after {
 .css-editor {
     /* we dont use `language-` classes anymore so thats why we need to add background and text color manually */
 
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
     padding: 10px 5px;
     border: 1px solid #ced4da;
 

@@ -30,6 +30,8 @@ Hub images). Coolify can't rebuild those, and they'd ship the upstream brand. Ou
 | `DATA_DIR` | Data directory | `./data/` (→ `/app/data`) |
 | `UPTIME_KUMA_DB_POOL_MAX_CONNECTIONS` | DB pool | 10 |
 | `NODE_ENV` | set to `production` (already set in image) | production |
+| `SEEDE_ADMIN_USERNAME` | Admin created on boot if missing (never overwritten) | `a.mkwizu@seedexr.com` (compose default) |
+| `SEEDE_ADMIN_PASSWORD` | Its initial password — **Coolify secret**, must not be "Too weak" or the admin is skipped (logged) | — |
 
 DB type (SQLite vs external MariaDB) is chosen in the **setup wizard**, not via env,
 and stored in `/app/data/db-config.json`.
@@ -43,3 +45,14 @@ Add the corresponding apt/pip packages to `Dockerfile.seede` if a deployment nee
 - Local: `docker build -f docker/Dockerfile.seede -t seedexr-monitor .` then
   `docker run -p 3001:3001 -v seede-data:/app/data seedexr-monitor` → open http://localhost:3001.
 - Confirm the container reports healthy after the start-period.
+
+## Public status domain vs in-house dashboard
+Any hostname listed in a status page's **Domain Names** is public-only: `/` shows that
+page, `/status/<slug>` shows other product pages, and the dashboard, login, `/metrics`
+and socket.io are refused there. Serve the dashboard on a second hostname.
+1. In Coolify add a second domain for the same service (e.g. `monitor.seedexr.com`,
+   ideally behind VPN/Cloudflare Access), or keep using the generated sslip.io URL.
+2. Log in on that hostname → Status Pages → your page → Domain Names → add
+   `status.seedexr.com` → Save. Do this from the admin hostname, not from status.seedexr.com,
+   or the session is cut off.
+3. One status page per product (`/status/<product>`); optionally map a domain per product.

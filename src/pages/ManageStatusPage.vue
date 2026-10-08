@@ -115,7 +115,7 @@ export default {
     align-items: center;
     gap: 10px;
     text-decoration: none;
-    border-radius: 1.5px;
+    border-radius: var(--ui-radius-sm);
     transition: all ease-in-out 0.15s;
     padding: 10px;
 

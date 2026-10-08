@@ -95,6 +95,7 @@ log.info("server", "Loading modules");
 log.debug("server", "Importing express");
 const express = require("express");
 const expressStaticGzip = require("express-static-gzip");
+const path = require("path");
 log.debug("server", "Importing redbean-node");
 const { R } = require("redbean-node");
 log.debug("server", "Importing jsonwebtoken");
@@ -245,6 +246,23 @@ app.use(function (req, res, next) {
     res.setHeader("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()");
     res.removeHeader("X-Powered-By");
     next();
+});
+
+// Status-page domains (Status Page → Domain Names) are public-only. The dashboard,
+// login and admin API stay on any other hostname; socket.io is refused in uptime-kuma-server.js.
+const statusDomainPublicPaths = /^\/($|status\/|api\/status-page\/|api\/badge\/|api\/push\/|api\/entry-page$|upload\/|assets\/)/;
+app.use(async (req, res, next) => {
+    if (Object.keys(StatusPage.domainMappingList).length === 0) {
+        return next();
+    }
+    let hostname = req.hostname;
+    if ((await setting("trustProxy")) && req.headers["x-forwarded-host"]) {
+        hostname = req.headers["x-forwarded-host"];
+    }
+    if (!(hostname in StatusPage.domainMappingList) || statusDomainPublicPaths.test(req.path) || path.extname(req.path)) {
+        return next();
+    }
+    res.redirect("/");
 });
 
 /**
@@ -1910,6 +1928,8 @@ async function initDatabase(testMode = false) {
     } else {
         log.debug("server", "Load JWT secret from database.");
     }
+
+    await User.ensureAdminFromEnv(process.env);
 
     // If there is no record in user table, it is a new Seede XR instance, need to setup
     if ((await R.knex("user").count("id as count").first()).count === 0) {

@@ -67,6 +67,7 @@ router.get("/api/status-page/heartbeat/:slug", cache("1 minutes"), async (reques
     try {
         let heartbeatList = {};
         let uptimeList = {};
+        let dailyList = {};
 
         let slug = request.params.slug;
         slug = slug.toLowerCase();
@@ -98,11 +99,16 @@ router.get("/api/status-page/heartbeat/:slug", cache("1 minutes"), async (reques
 
             const uptimeCalculator = await UptimeCalculator.getUptimeCalculator(monitorID);
             uptimeList[`${monitorID}_24`] = uptimeCalculator.get24Hour().uptime;
+            // 90 daily buckets (newest first, days without data omitted) for the uptime bars
+            dailyList[monitorID] = uptimeCalculator
+                .getDataArray(90, "day")
+                .map((d) => ({ timestamp: d.timestamp, up: d.up, down: d.down }));
         }
 
         response.json({
             heartbeatList,
             uptimeList,
+            dailyList,
         });
     } catch (error) {
         sendHttpError(response, error.message);

@@ -239,7 +239,8 @@
         <!-- Main Status Page -->
         <div :class="{ edit: enableEditMode }" class="main">
             <!-- Logo & Title -->
-            <h1 class="mb-4 title-flex">
+            <header class="sp-header">
+            <h1 class="title-flex">
                 <!-- Logo -->
                 <span class="logo-wrapper" @click="showImageCropUploadMethod">
                     <button
@@ -272,8 +273,20 @@
                 <Editable v-model="config.title" tag="span" :contenteditable="editMode" :noNL="true" />
             </h1>
 
+            <a
+                v-if="!enableEditMode"
+                :href="'/status/' + slug + '/rss'"
+                class="btn btn-normal btn-subscribe"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <font-awesome-icon icon="rss" />
+                {{ $t("Subscribe to updates") }}
+            </a>
+            </header>
+
             <!-- Admin functions -->
-            <div v-if="hasToken" class="mb-2">
+            <div v-if="hasToken" class="mb-4">
                 <div v-if="!enableEditMode">
                     <button class="btn btn-primary mb-2 me-2" data-testid="edit-button" @click="edit">
                         <font-awesome-icon icon="edit" />
@@ -377,35 +390,35 @@
             </template>
 
             <!-- Overall Status -->
-            <div class="shadow-box list p-4 overall-status mb-4">
+            <div class="overall-status mb-5" :class="'is-' + overallLevel" data-testid="overall-status">
                 <div v-if="Object.keys($root.publicMonitorList).length === 0 && loadedData">
-                    <font-awesome-icon icon="question-circle" class="ok" />
+                    <font-awesome-icon icon="question-circle" />
                     {{ $t("No Services") }}
                 </div>
 
                 <template v-else>
                     <div v-if="allUp">
-                        <font-awesome-icon icon="check-circle" class="ok" />
+                        <font-awesome-icon icon="check-circle" />
                         {{ $t("All Systems Operational") }}
                     </div>
 
                     <div v-else-if="partialDown">
-                        <font-awesome-icon icon="exclamation-circle" class="warning" />
+                        <font-awesome-icon icon="exclamation-circle" />
                         {{ $t("Partially Degraded Service") }}
                     </div>
 
                     <div v-else-if="allDown">
-                        <font-awesome-icon icon="times-circle" class="danger" />
+                        <font-awesome-icon icon="times-circle" />
                         {{ $t("Degraded Service") }}
                     </div>
 
                     <div v-else-if="isMaintenance">
-                        <font-awesome-icon icon="wrench" class="status-maintenance" />
+                        <font-awesome-icon icon="wrench" />
                         {{ $t("maintenanceStatus-under-maintenance") }}
                     </div>
 
                     <div v-else>
-                        <font-awesome-icon icon="question-circle" style="color: #efefef" />
+                        <font-awesome-icon icon="question-circle" />
                     </div>
                 </template>
             </div>
@@ -484,6 +497,12 @@
             </div>
 
             <div class="mb-4">
+                <p
+                    v-if="!enableEditMode && !config.showOnlyLastHeartbeat && $root.publicGroupList.length > 0"
+                    class="uptime-caption"
+                >
+                    {{ $t("uptimePast90Days") }}
+                </p>
                 <div v-if="$root.publicGroupList.length === 0 && loadedData" class="text-center">
                     {{ $t("statusPageNothing") }}
                 </div>
@@ -821,6 +840,17 @@ export default {
             return this.overallStatus === STATUS_PAGE_ALL_UP;
         },
 
+        overallLevel() {
+            return (
+                {
+                    [STATUS_PAGE_ALL_UP]: "up",
+                    [STATUS_PAGE_PARTIAL_DOWN]: "partial",
+                    [STATUS_PAGE_ALL_DOWN]: "down",
+                    [STATUS_PAGE_MAINTENANCE]: "maintenance",
+                }[this.overallStatus] || "none"
+            );
+        },
+
         partialDown() {
             return this.overallStatus === STATUS_PAGE_PARTIAL_DOWN;
         },
@@ -962,6 +992,15 @@ export default {
     },
     async created() {
         this.hasToken = "token" in this.$root.storage();
+        // Hide admin buttons on status-page domains: the dashboard isn't served there.
+        // Not awaited, so mounted()'s ?edit handling still sees the token.
+        if (this.hasToken) {
+            axios.get("/api/entry-page").then((res) => {
+                if (res.data.type === "statusPageMatchedDomain") {
+                    this.hasToken = false;
+                }
+            });
+        }
 
         // Browser change page
         // https://stackoverflow.com/questions/7317273/warn-user-before-leaving-web-page-with-unsaved-changes
@@ -995,18 +1034,6 @@ export default {
                 if (this.config.icon) {
                     this.imgDataUrl = this.config.icon;
                 }
-
-                this.maintenanceList = res.data.maintenanceList;
-                this.$root.publicGroupList = res.data.publicGroupList;
-
-                this.loading = false;
-
-                feedInterval = setInterval(
-                    () => {
-                        this.updateHeartbeatList();
-                    },
-                    Math.max(5, this.config.autoRefreshInterval) * 1000
-                );
 
                 this.incident = res.data.incident;
                 this.maintenanceList = res.data.maintenanceList;
@@ -1075,10 +1102,11 @@ export default {
             // If editMode, it will use the data from websocket.
             if (!this.editMode) {
                 axios.get("/api/status-page/heartbeat/" + this.slug).then((res) => {
-                    const { heartbeatList, uptimeList } = res.data;
+                    const { heartbeatList, uptimeList, dailyList } = res.data;
 
                     this.$root.heartbeatList = heartbeatList;
                     this.$root.uptimeList = uptimeList;
+                    this.$root.dailyUptimeList = dailyList || {};
 
                     const heartbeatIds = Object.keys(heartbeatList);
                     const downMonitors = heartbeatIds.reduce((downMonitorsAmount, currentId) => {
@@ -1496,34 +1524,86 @@ export default {
 @import "../assets/vars.scss";
 
 .overall-status {
-    font-weight: bold;
-    font-size: 25px;
+    font-weight: 600;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+    color: #fff;
+    padding: 22px 28px;
+    border-radius: var(--ui-radius);
+    background: var(--status-none);
 
-    .ok {
-        color: $primary;
+    svg {
+        margin-right: 10px;
+        vertical-align: -0.2em;
     }
 
-    .warning {
-        color: $warning;
+    // Deeper shades than the bars so white text keeps >= 3:1 contrast
+    &.is-up {
+        background: #16a34a;
     }
 
-    .danger {
-        color: $danger;
+    &.is-partial {
+        background: #d97706;
+    }
+
+    &.is-down {
+        background: #dc2626;
+    }
+
+    &.is-maintenance {
+        background: #2563eb;
+    }
+
+    &.is-none {
+        color: inherit;
     }
 }
 
+.sp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 24px 0 40px;
+
+    h1 {
+        margin: 0;
+    }
+}
+
+.btn-subscribe {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: var(--ui-radius-sm);
+    padding: 0.55rem 1.1rem;
+    font-size: 0.875rem;
+}
+
+.uptime-caption {
+    text-align: right;
+    font-size: 0.8125rem;
+    color: var(--status-muted);
+    margin-bottom: 12px;
+}
+
 h1 {
-    font-size: 30px;
+    font-size: 1.6rem;
 
     img {
         vertical-align: middle;
-        height: 40px;
-        width: 40px;
+        height: 44px;
+        width: 44px;
+        border-radius: var(--ui-radius-sm);
     }
 }
 
 .main {
     transition: all ease-in-out 0.1s;
+    max-width: 860px;
+    margin: 0 auto;
+    padding-bottom: 40px;
 
     &.edit {
         margin-left: 300px;
@@ -1569,6 +1649,9 @@ h1 {
 footer {
     text-align: center;
     font-size: 14px;
+    color: var(--status-muted);
+    border-top: 1px solid var(--status-line);
+    padding-top: 24px;
 }
 
 .description span {
@@ -1599,7 +1682,7 @@ footer {
         left: -14px;
         background-color: white;
         padding: 5px;
-        border-radius: 1.5px;
+        border-radius: var(--ui-radius-sm);
         cursor: pointer;
         box-shadow: 0 15px 70px rgba(0, 0, 0, 0.9);
     }
@@ -1693,22 +1776,14 @@ footer {
     vertical-align: middle;
 }
 
-.dark .shadow-box {
-    background-color: #0d1117;
-}
-
-.status-maintenance {
-    color: $maintenance;
-    margin-right: 5px;
-}
-
 .mobile {
     h1 {
-        font-size: 22px;
+        font-size: 1.3rem;
     }
 
     .overall-status {
-        font-size: 20px;
+        font-size: 1.05rem;
+        padding: 18px 20px;
     }
 }
 
@@ -1760,8 +1835,9 @@ footer {
 }
 
 .past-incidents-title {
-    font-size: 26px;
-    font-weight: normal;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-top: 48px;
 }
 
 .past-incidents-section {
@@ -1774,8 +1850,11 @@ footer {
     .incident-date-header {
         font-size: 1rem;
         font-weight: normal;
-        color: var(--bs-secondary);
+        font-weight: 600;
+        color: var(--status-muted);
         margin-bottom: 0.75rem;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--status-line);
     }
 
     .incident-list-box {
