@@ -1576,7 +1576,7 @@ export default {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     padding: 0.55rem 1.1rem;
     font-size: 0.875rem;
 }
@@ -1595,7 +1595,7 @@ h1 {
         vertical-align: middle;
         height: 44px;
         width: 44px;
-        border-radius: var(--ui-radius-sm);
+        border-radius: var(--ui-radius);
     }
 }
 
@@ -1682,7 +1682,7 @@ footer {
         left: -14px;
         background-color: white;
         padding: 5px;
-        border-radius: var(--ui-radius-sm);
+        border-radius: var(--ui-radius);
         cursor: pointer;
         box-shadow: 0 15px 70px rgba(0, 0, 0, 0.9);
     }

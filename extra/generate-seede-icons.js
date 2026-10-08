@@ -19,6 +19,7 @@ const targets = [
     { file: "apple-touch-icon.png", size: 180 },
     { file: "apple-touch-icon-precomposed.png", size: 180 },
     { file: "icon.png", size: 512 },
+    { file: "favicon-48.png", size: 48 }, // wrapped into favicon.ico below, then deleted
 ];
 
 (async () => {
@@ -44,4 +45,19 @@ const targets = [
     }
 
     await browser.close();
+
+    // favicon.ico = ICO header + one PNG-encoded 48x48 image (supported by all current browsers)
+    const png = fs.readFileSync(path.join(publicDir, "favicon-48.png"));
+    const header = Buffer.alloc(22);
+    header.writeUInt16LE(1, 2); // type: icon
+    header.writeUInt16LE(1, 4); // one image
+    header.writeUInt8(48, 6); // width
+    header.writeUInt8(48, 7); // height
+    header.writeUInt16LE(1, 10); // colour planes
+    header.writeUInt16LE(32, 12); // bits per pixel
+    header.writeUInt32LE(png.length, 14);
+    header.writeUInt32LE(22, 18); // image data offset
+    fs.writeFileSync(path.join(publicDir, "favicon.ico"), Buffer.concat([header, png]));
+    fs.unlinkSync(path.join(publicDir, "favicon-48.png"));
+    console.log("wrote public/favicon.ico (48x48)");
 })();

@@ -98,16 +98,8 @@
             </div>
         </aside>
 
-        <!-- Login header (desktop, not logged in) -->
-        <header v-if="!$root.isMobile && !$root.loggedIn" class="d-flex justify-content-center py-3 mb-3 border-bottom">
-            <span class="d-flex align-items-center text-dark text-decoration-none">
-                <object class="bi me-2" width="40" height="40" data="/icon.svg" />
-                <span class="fs-4 title">Seede XR</span>
-            </span>
-        </header>
-
-        <!-- Mobile header -->
-        <header v-if="$root.isMobile" class="d-flex flex-wrap justify-content-center pt-2 pb-2 mb-3">
+        <!-- Mobile header (the login screen carries its own branding) -->
+        <header v-if="$root.isMobile && $root.loggedIn" class="d-flex flex-wrap justify-content-center pt-2 pb-2 mb-3">
             <router-link to="/dashboard" class="d-flex align-items-center text-dark text-decoration-none">
                 <object class="bi" width="40" height="40" data="/icon.svg" />
                 <span class="fs-4 title ms-2">Seede XR</span>

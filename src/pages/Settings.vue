@@ -269,7 +269,7 @@ footer {
     }
 
     .menu-item {
-        border-radius: var(--ui-radius-sm);
+        border-radius: var(--ui-radius);
         margin: 0.5em;
         padding: 0.7em 1em;
         cursor: pointer;

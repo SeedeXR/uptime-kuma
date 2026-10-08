@@ -129,10 +129,13 @@ class UptimeKumaServer {
         UptimeKumaServer.monitorTypeList["manual"] = new ManualMonitorType();
         UptimeKumaServer.monitorTypeList["globalping"] = new GlobalpingMonitorType(this.getUserAgent());
         UptimeKumaServer.monitorTypeList["redis"] = new RedisMonitorType();
+        UptimeKumaServer.monitorTypeList["pm2"] = new PM2MonitorType();
         UptimeKumaServer.monitorTypeList["system-service"] = new SystemServiceMonitorType();
         UptimeKumaServer.monitorTypeList["sqlserver"] = new MssqlMonitorType();
         UptimeKumaServer.monitorTypeList["mysql"] = new MysqlMonitorType();
+        UptimeKumaServer.monitorTypeList["sftp"] = new SFTPMonitorType();
         UptimeKumaServer.monitorTypeList["oracledb"] = new OracleDbMonitorType();
+        UptimeKumaServer.monitorTypeList["ntp"] = new NTPMonitorType();
 
         // Allow all CORS origins (polling) in development
         let cors = undefined;
@@ -147,15 +150,12 @@ class UptimeKumaServer {
             allowRequest: async (req, callback) => {
                 // Status-page domains are public-only: no login/admin socket there
                 const StatusPage = require("./model/status_page");
-                if (Object.keys(StatusPage.domainMappingList).length > 0) {
-                    let host = req.headers.host || "";
-                    if ((await Settings.get("trustProxy")) && req.headers["x-forwarded-host"]) {
-                        host = req.headers["x-forwarded-host"];
-                    }
-                    if (host.replace(/:\d+$/, "") in StatusPage.domainMappingList) {
-                        callback("Not available on a status page domain", false);
-                        return;
-                    }
+                if (
+                    Object.keys(StatusPage.domainMappingList).length > 0 &&
+                    StatusPage.isStatusPageHost(req.headers, await Settings.get("trustProxy"))
+                ) {
+                    callback("Not available on a status page domain", false);
+                    return;
                 }
 
                 let transport;
@@ -596,8 +596,11 @@ const { TCPMonitorType } = require("./monitor-types/tcp.js");
 const { ManualMonitorType } = require("./monitor-types/manual");
 const { GlobalpingMonitorType } = require("./monitor-types/globalping");
 const { RedisMonitorType } = require("./monitor-types/redis");
+const { PM2MonitorType } = require("./monitor-types/pm2");
 const { SystemServiceMonitorType } = require("./monitor-types/system-service");
 const { MssqlMonitorType } = require("./monitor-types/mssql");
 const { MysqlMonitorType } = require("./monitor-types/mysql");
+const { SFTPMonitorType } = require("./monitor-types/sftp");
 const { OracleDbMonitorType } = require("./monitor-types/oracledb");
+const { NTPMonitorType } = require("./monitor-types/ntp");
 const Monitor = require("./model/monitor");

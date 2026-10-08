@@ -35,7 +35,7 @@ $dk-fog: #9a9a9a;
     font-size: 0.9375rem;
     padding: 0.65rem 0.9rem;
     border: 1px solid $line;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     color: $ink;
     background-color: $paper;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -51,6 +51,21 @@ $dk-fog: #9a9a9a;
 
 .form-select { padding-right: 2.5rem; } // keep room for the chevron
 
+// ---------- Auth screens (login / first-run setup, see AuthLayout.vue) ----------
+#app {
+    .auth-step { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: $fog; margin-bottom: 8px; }
+    .auth-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; }
+    .auth-lead { color: $fog; font-size: 0.9375rem; margin-bottom: 28px; }
+    .auth-input, .auth-card .input-group > *, .auth-form > .btn { height: 44px; }
+    .auth-hint { color: $fog; font-size: 0.8125rem; margin-top: 6px; margin-bottom: 0; }
+    // Even rhythm: 20px between fields; a field's hint stays 6px under it
+    .auth-form { display: flex; flex-direction: column; gap: 20px; }
+    .auth-card .input-group.mb-3 { margin-bottom: 0 !important; } // HiddenInput hardcodes mb-3
+}
+.dark #app {
+    .auth-step, .auth-lead, .auth-hint { color: $dk-fog; }
+}
+
 .form-label {
     font-size: 0.8125rem;
     font-weight: 600;
@@ -65,7 +80,7 @@ $dk-fog: #9a9a9a;
     font-size: 0.9375rem;
     font-weight: 600;
     padding: 0.625rem 1.25rem;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 .btn-sm { font-size: 0.8125rem; padding: 0.45rem 0.85rem; }
@@ -115,7 +130,7 @@ $dk-fog: #9a9a9a;
     padding: 0.45rem;
 }
 .dropdown-item {
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     padding: 0.6rem 0.9rem;
     font-size: 0.9375rem;
     &:hover, &:focus { background-color: rgba(18, 18, 18, 0.06); color: $ink; }
@@ -139,7 +154,7 @@ $dk-fog: #9a9a9a;
 
 // ---------- Alerts / badges / list-groups ----------
 .alert { border-radius: var(--ui-radius); border: 1px solid $line; padding: 1rem 1.25rem; }
-.badge { border-radius: var(--ui-radius-sm); font-weight: 600; padding: 0.4em 0.7em; }
+.badge { border-radius: var(--ui-radius); font-weight: 600; padding: 0.4em 0.7em; }
 .list-group-item { border-color: $line; padding: 0.75rem 1.25rem; }
 
 // ---------- Dark theme: surfaces contrast-safe ----------
@@ -155,6 +170,9 @@ $dk-fog: #9a9a9a;
         &.active, &:active { background-color: #fff; color: $ink; }
     }
     .modal-content { background-color: $dk-bg; border-color: $dk-line; }
+    // Brand-black outline buttons would vanish on the dark surface
+    .btn-outline-primary { color: #e6e6e6; border-color: $dk-line; }
+    .btn-outline-primary:hover, .btn-outline-primary:focus { color: #fff; background-color: rgba(255, 255, 255, 0.08); border-color: $dk-line; }
     .modal-header, .modal-footer { border-color: $dk-line; }
     .card { background-color: $dk-bg; border-color: $dk-line; }
     .table { color: #e6e6e6; th { color: $dk-fog; } }

@@ -43,7 +43,7 @@ ENV NODE_ENV=production \
 
 # Native .node binaries built in the builder are glibc-compatible (same Debian base)
 COPY --from=builder /app /app
-RUN mkdir -p ./data
+RUN mkdir -p ./data && chmod +x docker/seede-entrypoint.sh
 
 EXPOSE 3001
 
@@ -53,5 +53,6 @@ HEALTHCHECK --interval=60s --timeout=30s --start-period=180s --retries=5 \
     CMD node extra/healthcheck.js
 
 VOLUME ["/app/data"]
-ENTRYPOINT ["dumb-init", "--"]
+# Runs the app as the unprivileged "node" user (entrypoint drops root after fixing /app/data ownership)
+ENTRYPOINT ["dumb-init", "--", "/app/docker/seede-entrypoint.sh"]
 CMD ["node", "server/server.js"]

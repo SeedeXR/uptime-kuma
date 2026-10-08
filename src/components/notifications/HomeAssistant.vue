@@ -66,8 +66,7 @@ service_data:
   title: Seede XR
   data:
     status: 0 # 0=down 1=up
-    # name: Optional Seede XR Monitor Name to filter by</pre
-            >
+    # name: Optional Seede XR Monitor Name to filter by</pre>
             <p>
                 {{ $t("Then choose an action, for example switch the scene to where an RGB light is red.") }}
             </p>
