@@ -197,4 +197,6 @@ single use; email via Resend env (RESEND_API_KEY + EMAIL_FROM).
 - Prod also needs Settings → General → Primary Base URL set, or no link is built (logged: "Primary Base URL is not set")
 - Follow-up (owner): EMAIL_FROM is now passed to Resend verbatim (custom name lives in it); RESEND_FROM_NAME retired; verified via Resend GET /emails (from = as written, delivered)
 - PROD FINDING (Coolify logs via COOLIFY_MCP in .env): "SEEDE_ADMIN_PASSWORD is missing or too weak; admin … was not created" → a.mkwizu@seedexr.com doesn't exist in prod, so forgot-password silently does nothing for it. Coolify MCP can read env KEYS + logs and deploy, but cannot set env vars (owner must edit in Coolify UI)
-- [ ] HUMAN (Coolify UI): strong SEEDE_ADMIN_PASSWORD; EMAIL_FROM="<Name> <noreply@mail.seedexr.com>"; delete RESEND_FROM_NAME; set Primary Base URL in Settings → General; then redeploy
+- [x] 3rd root cause: Coolify deploys compose.coolify.yaml, which only forwarded SEEDE_ADMIN_* → RESEND_API_KEY/EMAIL_FROM never reached the container. Fixed in compose (+ SEEDE_PRIMARY_BASE_URL, which seeds Settings → Primary Base URL on first boot when empty)
+- [x] Coolify env set via REST API (PATCH/POST/DELETE /api/v1/applications/<uuid>/envs, same token): new strong SEEDE_ADMIN_PASSWORD, EMAIL_FROM (verified value), SEEDE_PRIMARY_BASE_URL, RESEND_FROM_NAME deleted
+- [x] PR #5 merged (4cdbdc4c), deployed: prod log "Created admin … from SEEDE_ADMIN_USERNAME", "Primary Base URL set …", and a real reset request → "Reset link sent for user id 2"
