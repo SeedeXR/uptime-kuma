@@ -63,3 +63,12 @@ and socket.io are refused there. Serve the dashboard on a second hostname.
    `status.seedexr.com` → Save. Do this from the admin hostname, not from status.seedexr.com,
    or the session is cut off.
 3. One status page per product (`/status/<product>`); optionally map a domain per product.
+
+## Live setup (2026-10-09)
+| Host | Role |
+|------|------|
+| `monitor.seedexr.com` | In-house dashboard (login, settings, `/mcp`, password reset). Primary Base URL. |
+| `status.seedexr.com` | Public status page `seedexr-website` (Status Page → Domain Names). Dashboard/admin paths redirect to `/`, socket.io refused. |
+
+Both domains are on the one Coolify app (`docker_compose_domains` of service `seedexr-monitor`);
+DNS: Cloudflare A records → 69.169.103.33 (DNS only). Product pages: `status.seedexr.com/status/<slug>`.
