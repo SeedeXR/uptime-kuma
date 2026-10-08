@@ -1,6 +1,7 @@
 const NotificationProvider = require("./notification-provider");
 const axios = require("axios");
 const { renderSeedeEmail } = require("./seede-email-template");
+const { version } = require("../../package.json");
 
 /**
  * Sender for Resend. EMAIL_FROM is used exactly as written: "noreply@domain", or
@@ -59,7 +60,12 @@ class Resend extends NotificationProvider {
         }
 
         const config = this.getAxiosConfigWithProxy({
-            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                // Resend docs: every request must send a User-Agent or it is rejected with 403
+                "User-Agent": `Seede-XR-Monitor/${version}`,
+            },
             timeout: 15000,
         });
         const result = await axios.post("https://api.resend.com/emails", { from, ...email }, config);
