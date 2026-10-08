@@ -121,6 +121,9 @@ export default {
                 "api-keys": {
                     title: this.$t("API Keys"),
                 },
+                mcp: {
+                    title: this.$t("MCP"),
+                },
                 proxies: {
                     title: this.$t("Proxies"),
                 },

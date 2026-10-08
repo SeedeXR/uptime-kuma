@@ -87,4 +87,4 @@ function renderSeedeEmail({ msg, monitorJSON = null, heartbeatJSON = null }) {
 </html>`;
 }
 
-module.exports = { renderSeedeEmail };
+module.exports = { renderSeedeEmail, esc };

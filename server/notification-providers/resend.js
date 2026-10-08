@@ -9,44 +9,46 @@ class Resend extends NotificationProvider {
      * @inheritdoc
      */
     async send(notification, msg, monitorJSON = null, heartbeatJSON = null) {
-        const okMsg = "Sent Successfully.";
-
         try {
-            // API key and from-address are configured in the environment (.env);
-            // fall back to the per-notification form fields for backward compatibility.
-            const apiKey = process.env.RESEND_API_KEY || notification.resendApiKey;
-            const fromEmail = (process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || notification.resendFromEmail || "").trim();
-            const fromName = process.env.RESEND_FROM_NAME || notification.resendFromName?.trim() || "Seede XR";
-
-            if (!apiKey || !fromEmail) {
-                throw new Error("Resend is not configured: set RESEND_API_KEY and RESEND_FROM_EMAIL in the environment.");
-            }
-
-            let config = {
-                headers: {
-                    Authorization: `Bearer ${apiKey}`,
-                    "Content-Type": "application/json",
+            await this.deliver(
+                {
+                    to: notification.resendToEmail,
+                    subject: notification.resendSubject || "Notification from Seede XR",
+                    // Branded HTML with a plain-text fallback for clients that don't render HTML
+                    html: renderSeedeEmail({ msg, monitorJSON, heartbeatJSON }),
+                    text: msg,
                 },
-            };
-            config = this.getAxiosConfigWithProxy(config);
-
-            let data = {
-                from: `${fromName} <${fromEmail}>`,
-                to: notification.resendToEmail,
-                subject: notification.resendSubject || "Notification from Seede XR",
-                // Branded HTML with a plain-text fallback for clients that don't render HTML
-                html: renderSeedeEmail({ msg, monitorJSON, heartbeatJSON }),
-                text: msg,
-            };
-
-            let result = await axios.post("https://api.resend.com/emails", data, config);
-            if (result.status === 200) {
-                return okMsg;
-            } else {
-                throw new Error(`Unexpected status code: ${result.status}`);
-            }
+                notification
+            );
+            return "Sent Successfully.";
         } catch (error) {
             this.throwGeneralAxiosError(error);
+        }
+    }
+
+    /**
+     * Send one email through Resend. API key and from-address come from the environment (.env),
+     * falling back to per-notification form fields for backward compatibility.
+     * @param {{to: string, subject: string, html: string, text: string}} email Message
+     * @param {object} notification Notification settings (optional fallbacks)
+     * @returns {Promise<void>}
+     */
+    async deliver(email, notification = {}) {
+        const apiKey = process.env.RESEND_API_KEY || notification.resendApiKey;
+        const fromEmail = (process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || notification.resendFromEmail || "").trim();
+        const fromName = process.env.RESEND_FROM_NAME || notification.resendFromName?.trim() || "Seede XR";
+
+        if (!apiKey || !fromEmail) {
+            throw new Error("Resend is not configured: set RESEND_API_KEY and RESEND_FROM_EMAIL in the environment.");
+        }
+
+        const config = this.getAxiosConfigWithProxy({
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            timeout: 15000,
+        });
+        const result = await axios.post("https://api.resend.com/emails", { from: `${fromName} <${fromEmail}>`, ...email }, config);
+        if (result.status !== 200) {
+            throw new Error(`Unexpected status code: ${result.status}`);
         }
     }
 }

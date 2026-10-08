@@ -5,6 +5,12 @@ const { log } = require("../src/util");
 const { loginRateLimiter, apiRateLimiter } = require("./rate-limiter");
 const { Settings } = require("./settings");
 const dayjs = require("dayjs");
+const crypto = require("crypto");
+
+// sha256(key) → api_key id for keys that already passed bcrypt. Lets busy clients (MCP makes
+// several calls per tool use) skip the CPU-heavy compare; validity is still re-checked from the
+// DB on every call. ponytail: unbounded until 1000 entries, then reset.
+const verifiedKeys = new Map();
 
 /**
  * Login to web app
@@ -36,7 +42,7 @@ exports.login = async function (username, password) {
 /**
  * Validate a provided API key
  * @param {string} key API key to verify
- * @returns {boolean} API is ok?
+ * @returns {Promise<(Bean|false)>} The api_key row when valid (callers check its scope), else false
  */
 async function verifyAPIKey(key) {
     if (typeof key !== "string") {
@@ -59,8 +65,25 @@ async function verifyAPIKey(key) {
         return false;
     }
 
-    return hash && passwordHash.verify(clear, hash.key);
+    // A deactivated user's keys stop working too (only deleting the user removed them before)
+    if (!(await R.getCell("SELECT active FROM `user` WHERE id = ?", [hash.user_id]))) {
+        return false;
+    }
+
+    const fingerprint = crypto.createHash("sha256").update(key).digest("hex");
+    if (verifiedKeys.get(fingerprint) === hash.id) {
+        return hash;
+    }
+    if (!passwordHash.verify(clear, hash.key)) {
+        return false;
+    }
+    if (verifiedKeys.size > 1000) {
+        verifiedKeys.clear();
+    }
+    verifiedKeys.set(fingerprint, hash.id);
+    return hash;
 }
+exports.verifyAPIKey = verifyAPIKey;
 
 /**
  * Callback for basic auth authorizers
@@ -80,7 +103,9 @@ function apiAuthorizer(username, password, callback) {
     // API Rate Limit
     apiRateLimiter.pass(null, 0).then((pass) => {
         if (pass) {
-            verifyAPIKey(password).then((valid) => {
+            verifyAPIKey(password).then((key) => {
+                // MCP tokens (scoped) are not /metrics credentials
+                const valid = !!key && !key.scope;
                 if (!valid) {
                     log.warn("api-auth", "Failed API auth attempt: invalid API Key");
                 }

@@ -43,6 +43,7 @@ class APIKey extends BeanModel {
         return {
             id: this.id,
             name: this.name,
+            scope: this.scope,
             userID: this.user_id,
             createdDate: this.created_date,
             active: this.active,
@@ -66,6 +67,7 @@ class APIKey extends BeanModel {
         bean.user_id = userID;
         bean.active = key.active;
         bean.expires = key.expires;
+        bean.scope = key.scope;
 
         await R.store(bean);
 

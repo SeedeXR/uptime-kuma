@@ -1,55 +1,18 @@
 <template>
-    <div>
-        <!-- Desktop header -->
-        <header v-if="!$root.isMobile" class="d-flex flex-wrap justify-content-center py-3 mb-3 border-bottom">
-            <router-link
-                to="/"
-                class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none"
-            >
-                <object class="bi me-2 ms-4" width="40" height="40" data="/icon.svg" />
-                <span class="fs-4 title">Seede XR</span>
-            </router-link>
-        </header>
-
-        <!-- Mobile header -->
-        <header v-else class="d-flex flex-wrap justify-content-center pt-2 pb-2 mb-3">
-            <router-link to="/dashboard" class="d-flex align-items-center text-dark text-decoration-none">
-                <object class="bi" width="40" height="40" data="/icon.svg" />
-                <span class="fs-4 title ms-2">Seede XR</span>
-            </router-link>
-        </header>
-
-        <div class="content">
-            <div>
-                <strong>🐻 {{ $t("Page Not Found") }}</strong>
-            </div>
-
-            <div class="guide">
-                {{ $t("Most likely causes:") }}
-                <ul>
-                    <li>{{ $t("The resource is no longer available.") }}</li>
-                    <li>{{ $t("There might be a typing error in the address.") }}</li>
-                </ul>
-
-                {{ $t("What you can try:") }}
-                <br />
-                <ul>
-                    <li>{{ $t("Retype the address.") }}</li>
-                    <li>
-                        <a href="#" class="go-back" @click="goBack()">{{ $t("Go back to the previous page.") }}</a>
-                    </li>
-                    <li>
-                        <a href="/" class="go-back">{{ $t("Go back to home page.") }}</a>
-                    </li>
-                </ul>
-            </div>
+    <main class="not-found">
+        <img src="/brand-logo.svg" alt="Seede XR Studios" class="brand-logo" />
+        <p class="code">404</p>
+        <h1 class="title">{{ $t("Page Not Found") }}</h1>
+        <p class="lead">{{ $t("notFoundLead") }}</p>
+        <div class="actions">
+            <button type="button" class="btn btn-normal" @click="goBack">{{ $t("Go back") }}</button>
+            <a href="/" class="btn btn-primary">{{ $t("Home") }}</a>
         </div>
-    </div>
+    </main>
 </template>
 
 <script>
 export default {
-    async mounted() {},
     methods: {
         /**
          * Go back 1 in browser history
@@ -63,48 +26,53 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../assets/vars.scss";
-
-.go-back {
-    text-decoration: none;
-    color: $primary !important;
+.not-found {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 24px;
+    text-align: center;
 }
 
-.content {
-    display: flex;
-    justify-content: center;
-    align-content: center;
-    align-items: center;
-    flex-direction: column;
-    gap: 50px;
-    padding-top: 30px;
+.brand-logo {
+    height: 104px;
+    margin-bottom: 24px;
 
-    strong {
-        font-size: 24px;
+    // Lockup is black; flip it for the dark theme
+    .dark & {
+        filter: invert(1);
     }
 }
 
-.guide {
-    max-width: 800px;
-    font-size: 14px;
+.code {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #6b6b6b;
 }
 
 .title {
-    font-weight: bold;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
-.dark {
-    header {
-        background-color: $dark-header-bg;
-        border-bottom-color: $dark-header-bg !important;
+.lead {
+    max-width: 360px;
+    color: #6b6b6b;
 
-        span {
-            color: #f0f6fc;
-        }
+    .dark & {
+        color: #9a9a9a;
     }
+}
 
-    .bottom-nav {
-        background-color: $dark-bg;
-    }
+.actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
 }
 </style>

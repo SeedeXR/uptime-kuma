@@ -19,6 +19,12 @@ module.exports.apiKeySocketHandler = (socket) => {
         try {
             checkLogin(socket);
 
+            // null = /metrics key; MCP tokens are "mcp-read" (read only) or "mcp-write" (read & write)
+            if (![undefined, null, "mcp-read", "mcp-write"].includes(key.scope)) {
+                throw new Error("Invalid key scope");
+            }
+            key.scope = key.scope || null;
+
             let clearKey = nanoid(40);
             let hashedKey = await passwordHash.generate(clearKey);
             key["key"] = hashedKey;
@@ -33,8 +39,10 @@ module.exports.apiKeySocketHandler = (socket) => {
             await sendAPIKeyList(socket);
 
             // Enable API auth if the user creates a key, otherwise only basic
-            // auth will be used for API.
-            await Settings.set("apiKeysEnabled", true);
+            // auth will be used for API. MCP tokens don't change /metrics auth.
+            if (!key.scope) {
+                await Settings.set("apiKeysEnabled", true);
+            }
 
             callback({
                 ok: true,

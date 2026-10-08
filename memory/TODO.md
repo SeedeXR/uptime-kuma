@@ -170,3 +170,23 @@ continue there. Update boxes as you go. **No commits.**
 - [x] Docker image runs the app as non-root `node` (entrypoint chowns legacy root-owned /app/data then setpriv); verified upgrade from root-owned volume, ping, setup, env admin, healthcheck
 - [x] Dashboard CSP: script-src 'self', connect-src 'self' + 360messenger; status pages keep analytics allowances. 0 violations
 - [x] Verified: eslint/stylelint/build, backend 266/266, e2e 26/28 (2 pre-existing), ZAP 0 High
+
+## Wave 11 — Checkbox, standalone pages, password reset, MCP server + tokens (DONE)
+Decisions: MCP tokens reuse api_key (bcrypt, expiry, revoke) + new `scope` column
+(null = metrics key, "mcp-read", "mcp-write"); /metrics rejects MCP tokens, /mcp requires
+one. MCP = Streamable HTTP at /mcp (stateless). Reset links built ONLY from the
+primaryBaseURL setting (no Host header → no reset-link poisoning); generic response
+whether or not the account exists; token = 32 random bytes, sha256 stored, 30-min expiry,
+single use; email via Resend env (RESEND_API_KEY + EMAIL_FROM).
+- [x] 1 Dark-mode checkbox/radio/switch visible (white fill, black tick)
+- [x] 2 NotFound (+ other standalone pages): no navbar, centered logo
+- [x] 3 Forgot password → email link → reset page (migration: user.reset_token_hash/expires)
+- [x] 4 MCP server /mcp (read: list/get monitors, status pages, events; write: pause/resume)
+- [x] 5 Settings → MCP: URL + token create (Read only / Read & write, expiry) + client config snippets
+- [x] 6 Review (code + ponytail), security check (ZAP/semgrep on new endpoints), tests, commit, push main, verify deploy
+- Login "Remember me" misalignment root cause: postcss-rtlcss rewrites compat's .form-check float/-1.5em margin as [dir="ltr"] … (same specificity as scoped overrides, later in bundle) → login row no longer uses .form-check
+- MCP grew (owner request): get_overview (system observability), discover_api_endpoints (OpenAPI 3/Swagger 2 JSON → watchable GETs), create_monitors (≤50, dashboard defaults + default notifications), create_status_page (with grouped monitors). Write tools need mcp-write
+- Code review #2 fixes: owner-inactive keys rejected (verifyAPIKey), bcrypt cache (sha256 → id, DB re-checked), Origin allowlist = primaryBaseURL, reset: own rate limiter + 5-min resend cooldown + atomic single-use + any password change voids link, per-monitor indexed latest-beat, dark switch knob, ResetPassword equality, Resend.deliver() shared (proxy), updateMonitorNotification reused, shared .choice-card style, esc() reused. Kept: no private-IP block in discover (in-house APIs are the use case; write-scoped, maxRedirects 3, no readOnlyHint)
+- Upstream navy dark colours (#232f3b/#282f39/#161b22/#070a10) replaced with brand neutrals
+- Verified: build, lint:prod, backend 266/266, e2e 28/30 (2 pre-existing), MCP Inspector CLI (official SDK client), curl matrix, reset flow incl. concurrency
+- Delivery: PR dev → main (owner rule), not direct merges

@@ -55,7 +55,7 @@ jobs:
           command: npx playwright install --with-deps chromium
       - run:
           name: E2E tests (Seede feature specs)
-          command: npx playwright test --config ./config/playwright.config.js branding.spec.js users.spec.js shared-admin.spec.js
+          command: npx playwright test --config ./config/playwright.config.js branding.spec.js users.spec.js shared-admin.spec.js mcp.spec.js
 
 workflows:
   ci-cd:

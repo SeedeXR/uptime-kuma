@@ -51,6 +51,41 @@ $dk-fog: #9a9a9a;
 
 .form-select { padding-right: 2.5rem; } // keep room for the chevron
 
+// ---------- Choice cards: a radio group shown as selectable cards (setup DB type, MCP access) ----------
+.choice-cards { display: grid; gap: 12px; }
+.choice-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 18px;
+    border: 1px solid $line;
+    border-radius: var(--ui-radius);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+    &:hover { border-color: $dk-fog; }
+    &.active { border-color: $ink; background-color: rgba(18, 18, 18, 0.03); }
+    input[type="radio"] {
+        appearance: none;
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        margin: 3px 0 0;
+        border: 1.5px solid $dk-fog;
+        border-radius: 50%;
+        &:checked { border-color: $ink; background: radial-gradient(circle, $ink 0 4px, transparent 4.5px); }
+        &:focus-visible { outline: 2px solid $dk-fog; outline-offset: 2px; }
+    }
+    .choice-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .choice-desc { display: block; margin-top: 4px; font-size: 0.8125rem; color: $fog; }
+}
+.dark .choice-card {
+    border-color: $dk-line;
+    &:hover { border-color: $fog; }
+    &.active { border-color: #fff; background-color: rgba(255, 255, 255, 0.04); }
+    input[type="radio"]:checked { border-color: #fff; background: radial-gradient(circle, #fff 0 4px, transparent 4.5px); }
+    .choice-desc { color: $dk-fog; }
+}
+
 // ---------- Auth screens (login / first-run setup, see AuthLayout.vue) ----------
 #app {
     .auth-step { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: $fog; margin-bottom: 8px; }

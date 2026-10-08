@@ -40,11 +40,16 @@
                 />
             </div>
 
-            <div class="form-check">
-                <input id="remember" v-model="$root.remember" type="checkbox" value="remember-me" class="form-check-input" />
-                <label class="form-check-label" for="remember">
-                    {{ $t("Remember me") }}
-                </label>
+            <div class="login-row">
+                <div class="remember">
+                    <input id="remember" v-model="$root.remember" type="checkbox" value="remember-me" class="form-check-input" />
+                    <label class="form-check-label" for="remember">
+                        {{ $t("Remember me") }}
+                    </label>
+                </div>
+                <router-link v-if="!tokenRequired" to="/forgot-password" class="forgot-link">
+                    {{ $t("Forgot password?") }}
+                </router-link>
             </div>
 
             <button class="w-100 btn btn-primary" type="submit" :disabled="processing">
@@ -119,14 +124,23 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.form-check {
+.login-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.forgot-link {
+    font-size: 0.875rem;
+}
+
+// Not .form-check: its (RTL-processed) float/negative-margin rule shoves the box out of line
+.remember {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding-left: 0;
 
     .form-check-input {
-        float: none;
         margin: 0;
     }
 }
