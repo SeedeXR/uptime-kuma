@@ -200,3 +200,9 @@ single use; email via Resend env (RESEND_API_KEY + EMAIL_FROM).
 - [x] 3rd root cause: Coolify deploys compose.coolify.yaml, which only forwarded SEEDE_ADMIN_* → RESEND_API_KEY/EMAIL_FROM never reached the container. Fixed in compose (+ SEEDE_PRIMARY_BASE_URL, which seeds Settings → Primary Base URL on first boot when empty)
 - [x] Coolify env set via REST API (PATCH/POST/DELETE /api/v1/applications/<uuid>/envs, same token): new strong SEEDE_ADMIN_PASSWORD, EMAIL_FROM (verified value), SEEDE_PRIMARY_BASE_URL, RESEND_FROM_NAME deleted
 - [x] PR #5 merged (4cdbdc4c), deployed: prod log "Created admin … from SEEDE_ADMIN_USERNAME", "Primary Base URL set …", and a real reset request → "Reset link sent for user id 2"
+
+## Wave 13 — Separate dashboard domain (DONE 2026-10-09)
+- [x] DNS monitor.seedexr.com (owner, Cloudflare) → added to Coolify docker_compose_domains next to status.seedexr.com, redeployed, Let's Encrypt cert
+- [x] Primary Base URL → https://monitor.seedexr.com (setSettings over monitor host); Coolify SEEDE_PRIMARY_BASE_URL + compose default updated
+- [x] status.seedexr.com mapped to status page seedexr-website (saveStatusPage with unchanged config/groups; done over monitor host since status host refuses admin sockets)
+- [x] Verified: public host serves status page at /, redirects dashboard/settings/login/reset/metrics/mcp to /, socket.io 403; monitor host dashboard 200, socket 200, /mcp 401 without token

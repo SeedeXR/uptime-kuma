@@ -16,7 +16,7 @@ services:
       # Compose only passes variables listed here into the container — Coolify values alone don't reach the app
       - RESEND_API_KEY=${RESEND_API_KEY}
       - EMAIL_FROM=${EMAIL_FROM}
-      - SEEDE_PRIMARY_BASE_URL=${SEEDE_PRIMARY_BASE_URL:-https://status.seedexr.com}
+      - SEEDE_PRIMARY_BASE_URL=${SEEDE_PRIMARY_BASE_URL:-https://monitor.seedexr.com}
     volumes:
       # MUST be persistent — holds SQLite DB, db-config.json, uploads, screenshots.
       # Without it, every redeploy wipes data and re-runs the setup wizard.
