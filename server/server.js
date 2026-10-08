@@ -220,13 +220,18 @@ app.use(function (req, res, next) {
     // https: sources are required by the framework's inline styles and the
     // user-configurable status-page analytics; a strict nonce-based policy would need
     // an app-wide refactor. object-src 'self' allows the <object>-embedded logo.
+    // Status pages (and "/", which serves one on status-page domains) inline their preload data and
+    // load admin-configured analytics scripts, so they keep the permissive script/connect sources.
+    // Everything else (the dashboard) runs only our own bundled scripts — a much stronger XSS barrier.
+    const statusPagePath = req.path === "/" || req.path.startsWith("/status");
     const cspParts = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' https:",
+        statusPagePath ? "script-src 'self' 'unsafe-inline' https:" : "script-src 'self'",
         "style-src 'self' 'unsafe-inline' https:",
         "img-src 'self' data: blob: https:",
         "font-src 'self' data: https:",
-        "connect-src 'self' ws: wss: https:",
+        // 360messenger's notification form looks up groups from the browser
+        statusPagePath ? "connect-src 'self' ws: wss: https:" : "connect-src 'self' https://api.360messenger.com",
         "object-src 'self'",
         "base-uri 'self'",
         // Directives that do NOT inherit from default-src — set explicitly (ZAP 10055).
@@ -252,14 +257,12 @@ app.use(function (req, res, next) {
 // login and admin API stay on any other hostname; socket.io is refused in uptime-kuma-server.js.
 const statusDomainPublicPaths = /^\/($|status\/|api\/status-page\/|api\/badge\/|api\/push\/|api\/entry-page$|upload\/|assets\/)/;
 app.use(async (req, res, next) => {
-    if (Object.keys(StatusPage.domainMappingList).length === 0) {
-        return next();
-    }
-    let hostname = req.hostname;
-    if ((await setting("trustProxy")) && req.headers["x-forwarded-host"]) {
-        hostname = req.headers["x-forwarded-host"];
-    }
-    if (!(hostname in StatusPage.domainMappingList) || statusDomainPublicPaths.test(req.path) || path.extname(req.path)) {
+    if (
+        Object.keys(StatusPage.domainMappingList).length === 0 || // also: DB not ready yet, skip the setting lookup
+        statusDomainPublicPaths.test(req.path) ||
+        path.extname(req.path) ||
+        !StatusPage.isStatusPageHost(req.headers, await setting("trustProxy"))
+    ) {
         return next();
     }
     res.redirect("/");

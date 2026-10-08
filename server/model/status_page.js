@@ -166,6 +166,10 @@ class StatusPage extends BeanModel {
             .substring(0, 155);
 
         $("title").text(statusPage.title);
+        // index.html paints bodies without .light dark until the app mounts; light pages start light
+        if (statusPage.theme === "light") {
+            $("body").addClass("light");
+        }
         $("meta[name=description]").attr("content", description155);
 
         if (statusPage.icon) {
@@ -342,6 +346,17 @@ class StatusPage extends BeanModel {
             publicGroupList,
             maintenanceList,
         };
+    }
+
+    /**
+     * Is this request addressed to a status-page domain (Status Page → Domain Names)?
+     * @param {object} headers Request headers
+     * @param {boolean} trustProxy Honour X-Forwarded-Host (the trustProxy setting)
+     * @returns {boolean} true for a status-page-only hostname
+     */
+    static isStatusPageHost(headers, trustProxy) {
+        const host = (trustProxy && headers["x-forwarded-host"]) || headers.host || "";
+        return host.replace(/:\d+$/, "") in StatusPage.domainMappingList;
     }
 
     /**

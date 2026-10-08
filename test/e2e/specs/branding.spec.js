@@ -14,7 +14,8 @@ test.describe("Seede XR branding", () => {
     test("brand name is shown after login and old brand is gone", async ({ page }) => {
         await page.goto("./");
         await login(page);
-        await expect(page.locator("body")).toContainText("Seede XR");
+        // Brand is carried by the logo (no text header since the split login screen)
+        await expect(page.locator('img[alt="Seede XR"]').first()).toBeVisible();
         await expect(page.locator("body")).not.toContainText("Uptime Kuma");
     });
 });

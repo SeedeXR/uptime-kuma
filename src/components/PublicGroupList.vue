@@ -151,6 +151,13 @@ import Draggable from "vuedraggable";
 import HeartbeatBar from "./HeartbeatBar.vue";
 import DailyUptimeBar from "./DailyUptimeBar.vue";
 import { DOWN, UP, PENDING, MAINTENANCE } from "../util.ts";
+
+const STATUS_LABELS = {
+    [UP]: { text: "Operational", level: "up" },
+    [DOWN]: { text: "Major Outage", level: "down" },
+    [PENDING]: { text: "Degraded Performance", level: "partial" },
+    [MAINTENANCE]: { text: "Maintenance", level: "maintenance" },
+};
 import Uptime from "./Uptime.vue";
 import Tag from "./Tag.vue";
 import Status from "./Status.vue";
@@ -319,18 +326,7 @@ export default {
          * @returns {{text: string, level: string}} Label text key and colour level
          */
         statusLabel(monitorId) {
-            switch (this.statusOfLastHeartbeat(monitorId)) {
-                case UP:
-                    return { text: "Operational", level: "up" };
-                case DOWN:
-                    return { text: "Major Outage", level: "down" };
-                case PENDING:
-                    return { text: "Degraded Performance", level: "partial" };
-                case MAINTENANCE:
-                    return { text: "Maintenance", level: "maintenance" };
-                default:
-                    return { text: "Unknown", level: "none" };
-            }
+            return STATUS_LABELS[this.statusOfLastHeartbeat(monitorId)] || { text: "Unknown", level: "none" };
         },
 
         /**

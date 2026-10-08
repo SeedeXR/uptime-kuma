@@ -1,192 +1,111 @@
 <template>
-    <div v-if="show" class="form-container">
-        <form @submit.prevent="submit">
+    <AuthLayout v-if="show">
+        <div v-if="info.runningSetup" class="setup-progress" role="status">
+            <div class="spinner-border" aria-hidden="true"></div>
+            <h1 class="auth-title mt-4">{{ $t("Setting up your database") }}</h1>
+            <p class="auth-lead">{{ $t("settingUpDatabaseMSG") }}</p>
+        </div>
+
+        <form v-else class="auth-form" @submit.prevent="submit">
             <div>
-                <object width="64" height="64" data="/icon.svg" />
-                <div style="font-size: 28px; font-weight: bold; margin-top: 5px">Seede XR</div>
+                <p class="auth-step">{{ $t("setupStep", [1, 2]) }}</p>
+                <h1 class="auth-title">{{ $t("Choose a database") }}</h1>
+                <p class="auth-lead mb-0">{{ $t("setupDatabaseChooseDatabase") }}</p>
             </div>
 
-            <div v-if="info.runningSetup" class="mt-5">
-                <div class="alert alert-success mx-3 px-4" role="alert">
-                    <div class="d-flex align-items-center">
-                        <strong>{{ $t("settingUpDatabaseMSG") }}</strong>
-                        <div class="ms-3 pt-1">
-                            <div class="spinner-border" role="status" aria-hidden="true"></div>
-                        </div>
+            <div class="db-options" role="radiogroup" :aria-label="$t('Choose a database')">
+                <label
+                    v-for="option in dbOptions"
+                    :key="option.value"
+                    class="db-option"
+                    :class="{ active: dbConfig.type === option.value }"
+                >
+                    <input v-model="dbConfig.type" type="radio" name="db-type" :value="option.value" class="db-radio" />
+                    <span class="db-option-body">
+                        <span class="db-option-title">
+                            {{ option.title }}
+                            <span v-if="option.recommended" class="badge">{{ $t("Recommended") }}</span>
+                        </span>
+                        <span class="db-option-desc">{{ $t(option.desc) }}</span>
+                    </span>
+                </label>
+            </div>
+
+            <div v-if="dbConfig.type === 'mariadb'" class="auth-form">
+                <div v-if="!isProvidedMariaDBSocket" class="row g-2">
+                    <div class="col-8">
+                        <label for="db-hostname" class="form-label">{{ $t("Hostname") }}</label>
+                        <input id="db-hostname" v-model="dbConfig.hostname" type="text" class="form-control" required />
                     </div>
+                    <div class="col-4">
+                        <label for="db-port" class="form-label">{{ $t("Port") }}</label>
+                        <input id="db-port" v-model="dbConfig.port" type="text" class="form-control" required />
+                    </div>
+                </div>
+
+                <i18n-t v-else keypath="mariadbSocketPathDetectedHelptext" tag="div" class="form-text">
+                    <code>UPTIME_KUMA_DB_SOCKET</code>
+                </i18n-t>
+
+                <div>
+                    <label for="db-username" class="form-label">{{ $t("Username") }}</label>
+                    <input id="db-username" v-model="dbConfig.username" type="text" class="form-control" required />
+                </div>
+
+                <div>
+                    <label for="db-password" class="form-label">{{ $t("Password") }}</label>
+                    <input id="db-password" v-model="dbConfig.password" type="password" class="form-control" required />
+                </div>
+
+                <div>
+                    <label for="db-name" class="form-label">{{ $t("dbName") }}</label>
+                    <input id="db-name" v-model="dbConfig.dbName" type="text" class="form-control" required />
+                </div>
+
+                <div class="form-check form-switch">
+                    <input id="sslCheck" v-model="dbConfig.ssl" type="checkbox" role="switch" class="form-check-input" />
+                    <label class="form-check-label" for="sslCheck">
+                        {{ $t("enableSSL") }} <span class="text-muted">({{ $t("Optional") }})</span>
+                    </label>
+                    <div class="form-text">{{ $t("mariadbUseSSLHelptext") }}</div>
+                </div>
+
+                <div v-if="dbConfig.ssl">
+                    <label for="caInput" class="form-label">{{ $t("mariadbCaCertificateLabel") }}</label>
+                    <textarea
+                        id="caInput"
+                        v-model="dbConfig.ca"
+                        class="form-control"
+                        placeholder="-----BEGIN CERTIFICATE-----"
+                        rows="5"
+                    ></textarea>
+                    <div class="form-text">{{ $t("mariadbCaCertificateHelptext") }}</div>
                 </div>
             </div>
 
-            <template v-if="!info.runningSetup">
-                <div class="form-floating short mt-3">
-                    <select id="language" v-model="$root.language" class="form-select">
-                        <option v-for="(lang, i) in $i18n.availableLocales" :key="`Lang${i}`" :value="lang">
-                            {{ $i18n.messages[lang].languageName }}
-                        </option>
-                    </select>
-                    <label for="language" class="form-label">{{ $t("Language") }}</label>
-                </div>
-
-                <p class="mt-5 short">
-                    {{ $t("setupDatabaseChooseDatabase") }}
-                </p>
-
-                <div class="btn-group" role="group" :aria-label="$t('Basic radio toggle button group')">
-                    <template v-if="info.isEnabledEmbeddedMariaDB">
-                        <input
-                            id="btnradio3"
-                            v-model="dbConfig.type"
-                            type="radio"
-                            class="btn-check"
-                            autocomplete="off"
-                            value="embedded-mariadb"
-                        />
-
-                        <label class="btn btn-outline-primary" for="btnradio3">Embedded MariaDB</label>
-                    </template>
-
-                    <input
-                        id="btnradio2"
-                        v-model="dbConfig.type"
-                        type="radio"
-                        class="btn-check"
-                        autocomplete="off"
-                        value="mariadb"
-                    />
-                    <label class="btn btn-outline-primary" for="btnradio2">MariaDB/MySQL</label>
-
-                    <input
-                        id="btnradio1"
-                        v-model="dbConfig.type"
-                        type="radio"
-                        class="btn-check"
-                        autocomplete="off"
-                        value="sqlite"
-                    />
-                    <label class="btn btn-outline-primary" for="btnradio1">SQLite</label>
-                </div>
-
-                <div v-if="dbConfig.type === 'embedded-mariadb'" class="mt-3 short">
-                    {{ $t("setupDatabaseEmbeddedMariaDB") }}
-                </div>
-
-                <div v-if="dbConfig.type === 'mariadb'" class="mt-3 short">
-                    {{ $t("setupDatabaseMariaDB") }}
-                </div>
-
-                <div v-if="dbConfig.type === 'sqlite'" class="mt-3 short">
-                    {{ $t("setupDatabaseSQLite") }}
-                </div>
-
-                <template v-if="dbConfig.type === 'mariadb'">
-                    <div v-if="!isProvidedMariaDBSocket" class="form-floating mt-3 short">
-                        <input
-                            id="floatingInput"
-                            v-model="dbConfig.hostname"
-                            type="text"
-                            class="form-control"
-                            required
-                        />
-                        <label for="floatingInput">{{ $t("Hostname") }}</label>
-                    </div>
-
-                    <div v-if="!isProvidedMariaDBSocket" class="form-floating mt-3 short">
-                        <input id="floatingInput" v-model="dbConfig.port" type="text" class="form-control" required />
-                        <label for="floatingInput">{{ $t("Port") }}</label>
-                    </div>
-
-                    <div v-if="isProvidedMariaDBSocket" class="mt-1 short text-start">
-                        <i18n-t keypath="mariadbSocketPathDetectedHelptext" tag="div" class="form-text">
-                            <code>UPTIME_KUMA_DB_SOCKET</code>
-                        </i18n-t>
-                    </div>
-
-                    <hr v-if="isProvidedMariaDBSocket" class="mt-3 mb-2 short" />
-
-                    <div class="form-floating mt-3 short">
-                        <input
-                            id="floatingInput"
-                            v-model="dbConfig.username"
-                            type="text"
-                            class="form-control"
-                            required
-                        />
-                        <label for="floatingInput">{{ $t("Username") }}</label>
-                    </div>
-
-                    <div class="form-floating mt-3 short">
-                        <input
-                            id="floatingInput"
-                            v-model="dbConfig.password"
-                            type="password"
-                            class="form-control"
-                            required
-                        />
-                        <label for="floatingInput">{{ $t("Password") }}</label>
-                    </div>
-
-                    <div class="form-floating mt-3 short">
-                        <input id="floatingInput" v-model="dbConfig.dbName" type="text" class="form-control" required />
-                        <label for="floatingInput">{{ $t("dbName") }}</label>
-                    </div>
-
-                    <div class="mt-3 short text-start">
-                        <div class="form-check form-switch ps-0" style="height: auto; display: block; padding: 0">
-                            <div class="d-flex align-items-center">
-                                <input
-                                    id="sslCheck"
-                                    v-model="dbConfig.ssl"
-                                    type="checkbox"
-                                    role="switch"
-                                    class="form-check-input ms-0 me-2"
-                                    style="float: none"
-                                />
-                                <label class="form-check-label fw-bold" for="sslCheck">
-                                    {{ $t("enableSSL") }}
-                                    <span class="fw-normal text-muted" style="font-size: 0.9em">
-                                        ({{ $t("Optional") }})
-                                    </span>
-                                </label>
-                            </div>
-                            <div class="form-text mt-1">
-                                {{ $t("mariadbUseSSLHelptext") }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="dbConfig.ssl" class="form-floating mt-3 short">
-                        <textarea
-                            id="caInput"
-                            v-model="dbConfig.ca"
-                            class="form-control"
-                            placeholder="-----BEGIN CERTIFICATE-----"
-                            style="height: 120px"
-                        ></textarea>
-                        <label for="caInput">{{ $t("mariadbCaCertificateLabel") }}</label>
-                        <div class="form-text">{{ $t("mariadbCaCertificateHelptext") }}</div>
-                    </div>
-                </template>
-
-                <button class="btn btn-primary mt-4 short" type="submit" :disabled="disabledButton">
-                    {{ $t("Next") }}
-                </button>
-            </template>
+            <button class="btn btn-primary w-100" type="submit" :disabled="disabledButton">
+                {{ $t("Next") }}
+            </button>
         </form>
-    </div>
+    </AuthLayout>
 </template>
 
 <script>
 import axios from "axios";
+import AuthLayout from "../components/AuthLayout.vue";
 import { useToast } from "vue-toastification";
 import { sleep } from "../util.ts";
 const toast = useToast();
 
 export default {
+    components: {
+        AuthLayout,
+    },
     data() {
         return {
             show: false,
             dbConfig: {
-                type: undefined,
+                type: undefined, // set in mounted(): embedded MariaDB when the image ships it, else SQLite
                 port: 3306,
                 hostname: "",
                 username: "",
@@ -203,6 +122,14 @@ export default {
         };
     },
     computed: {
+        dbOptions() {
+            const embedded = this.info.isEnabledEmbeddedMariaDB;
+            return [
+                ...(embedded ? [{ value: "embedded-mariadb", title: "Embedded MariaDB", desc: "setupDatabaseEmbeddedMariaDB", recommended: true }] : []),
+                { value: "sqlite", title: "SQLite", desc: "setupDatabaseSQLite", recommended: !embedded },
+                { value: "mariadb", title: "MariaDB / MySQL", desc: "setupDatabaseMariaDB" },
+            ];
+        },
         disabledButton() {
             return this.dbConfig.type === undefined || this.info.runningSetup;
         },
@@ -213,6 +140,7 @@ export default {
     async mounted() {
         let res = await axios.get("/setup-database-info");
         this.info = res.data;
+        this.dbConfig.type = this.info.isEnabledEmbeddedMariaDB ? "embedded-mariadb" : "sqlite";
 
         if (this.info && this.info.needSetup === false) {
             location.href = "/setup";
@@ -231,7 +159,7 @@ export default {
                 await sleep(2000);
                 await this.goToMainServerWhenReady();
             } catch (e) {
-                toast.error(e.response.data);
+                toast.error(e.response?.data || e.message);
             } finally {
                 this.info.runningSetup = false;
             }
@@ -265,61 +193,103 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.form-container {
+.db-options {
+    display: grid;
+    gap: 12px;
+}
+
+.db-option {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-top: 40px;
-    padding-bottom: 40px;
-}
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 18px;
+    border: 1px solid #e6e6e6;
+    border-radius: var(--ui-radius);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
 
-.btn-group {
-    label {
-        width: 200px;
-        line-height: 55px;
-        font-size: 16px;
-        font-weight: bold;
+    &:hover {
+        border-color: #9a9a9a;
     }
-}
 
-.form-floating {
-    > .form-select {
-        padding-left: 1.3rem;
-        padding-top: 1.525rem;
-        line-height: 1.35;
+    &.active {
+        border-color: #121212;
+        background-color: rgba(18, 18, 18, 0.03);
+    }
 
-        ~ label {
-            padding-left: 1.3rem;
+    .dark & {
+        border-color: #2a2a2a;
+
+        &:hover {
+            border-color: #6b6b6b;
+        }
+
+        &.active {
+            border-color: #fff;
+            background-color: rgba(255, 255, 255, 0.04);
         }
     }
+}
 
-    > label {
-        padding-left: 1.3rem;
+.db-radio {
+    appearance: none;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    border: 1.5px solid #9a9a9a;
+    border-radius: 50%;
+
+    &:checked {
+        border-color: #121212;
+        background: radial-gradient(circle, #121212 0 4px, transparent 4.5px);
     }
 
-    > .form-control {
-        padding-left: 1.3rem;
+    &:focus-visible {
+        outline: 2px solid #9a9a9a;
+        outline-offset: 2px;
+    }
+
+    .dark &:checked {
+        border-color: #fff;
+        background: radial-gradient(circle, #fff 0 4px, transparent 4.5px);
     }
 }
 
-.form-check {
-    height: calc(3.5rem + 2px);
-    padding: 0;
+.db-option-body {
     display: flex;
-    align-items: center;
-    justify-content: space-around;
-}
-
-.short {
-    width: 300px;
-}
-
-form {
-    max-width: 800px;
-    text-align: center;
-    display: flex;
-    justify-content: center;
     flex-direction: column;
+    gap: 4px;
+}
+
+.db-option-title {
+    font-weight: 600;
+    display: flex;
     align-items: center;
+    gap: 8px;
+
+    .badge {
+        font-size: 0.6875rem;
+        background: #121212;
+        color: #fff;
+
+        .dark & {
+            background: #fff;
+            color: #121212;
+        }
+    }
+}
+
+.db-option-desc {
+    font-size: 0.8125rem;
+    color: #6b6b6b;
+
+    .dark & {
+        color: #9a9a9a;
+    }
+}
+
+.setup-progress {
+    text-align: center;
 }
 </style>

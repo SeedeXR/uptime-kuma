@@ -1,79 +1,75 @@
 <template>
-    <div class="form-container" data-cy="setup-form">
-        <div class="form">
-            <form @submit.prevent="submit">
-                <div>
-                    <object width="64" height="64" data="/icon.svg" />
-                    <div style="font-size: 28px; font-weight: bold; margin-top: 5px">Seede XR</div>
-                </div>
+    <AuthLayout data-cy="setup-form">
+        <form class="auth-form" @submit.prevent="submit">
+            <div>
+            <p class="auth-step">{{ $t("setupStep", [2, 2]) }}</p>
+            <h1 class="auth-title">{{ $t("Create your admin account") }}</h1>
+            <p class="auth-lead mb-0">{{ $t("setupAdminLead") }}</p>
+            </div>
 
-                <p class="mt-3">
-                    {{ $t("Create your admin account") }}
-                </p>
+            <input
+                id="floatingInput"
+                v-model="username"
+                type="text"
+                class="form-control auth-input"
+                :placeholder="$t('Username')"
+                :aria-label="$t('Username')"
+                autocomplete="username"
+                required
+                data-cy="username-input"
+            />
 
-                <div class="form-floating">
-                    <select id="language" v-model="$root.language" class="form-select">
-                        <option v-for="(lang, i) in $i18n.availableLocales" :key="`Lang${i}`" :value="lang">
-                            {{ $i18n.messages[lang].languageName }}
-                        </option>
-                    </select>
-                    <label for="language" class="form-label">{{ $t("Language") }}</label>
-                </div>
+            <div>
+                <HiddenInput
+                    id="floatingPassword"
+                    v-model="password"
+                    :placeholder="$t('Password')"
+                    autocomplete="new-password"
+                    :required="true"
+                    data-cy="password-input"
+                />
+                <p class="auth-hint">{{ $t("setupPasswordHint") }}</p>
+            </div>
 
-                <div class="form-floating mt-3">
-                    <input
-                        id="floatingInput"
-                        v-model="username"
-                        type="text"
-                        class="form-control"
-                        :placeholder="$t('Username')"
-                        required
-                        data-cy="username-input"
-                    />
-                    <label for="floatingInput">{{ $t("Username") }}</label>
-                </div>
+            <div>
+            <input
+                id="repeat"
+                v-model="repeatPassword"
+                type="password"
+                class="form-control auth-input"
+                :class="{ 'is-invalid': passwordMismatch }"
+                :placeholder="$t('Repeat Password')"
+                :aria-label="$t('Repeat Password')"
+                autocomplete="new-password"
+                required
+                data-cy="password-repeat-input"
+            />
+            <p v-if="passwordMismatch" class="auth-hint text-danger">{{ $t("PasswordsDoNotMatch") }}</p>
+            </div>
 
-                <div class="form-floating mt-3">
-                    <input
-                        id="floatingPassword"
-                        v-model="password"
-                        type="password"
-                        class="form-control"
-                        :placeholder="$t('Password')"
-                        required
-                        data-cy="password-input"
-                    />
-                    <label for="floatingPassword">{{ $t("Password") }}</label>
-                </div>
+            <button
+                class="w-100 btn btn-primary"
+                type="submit"
+                :disabled="processing || passwordMismatch"
+                data-cy="submit-setup-form"
+            >
+                {{ $t("Create") }}
+            </button>
 
-                <div class="form-floating mt-3">
-                    <input
-                        id="repeat"
-                        v-model="repeatPassword"
-                        type="password"
-                        class="form-control"
-                        :placeholder="$t('Repeat Password')"
-                        required
-                        data-cy="password-repeat-input"
-                    />
-                    <label for="repeat">{{ $t("Repeat Password") }}</label>
-                </div>
-
-                <button
-                    class="w-100 btn btn-primary mt-3"
-                    type="submit"
-                    :disabled="processing"
-                    data-cy="submit-setup-form"
-                >
-                    {{ $t("Create") }}
-                </button>
-            </form>
-        </div>
-    </div>
+            <p class="auth-hint text-center">{{ $t("setupTeamHint") }}</p>
+        </form>
+    </AuthLayout>
 </template>
 
 <script>
+import AuthLayout from "../components/AuthLayout.vue";
+import HiddenInput from "../components/HiddenInput.vue";
+
 export default {
+    components: {
+        AuthLayout,
+        HiddenInput,
+    },
     data() {
         return {
             processing: false,
@@ -82,7 +78,15 @@ export default {
             repeatPassword: "",
         };
     },
-    watch: {},
+    computed: {
+        /**
+         * Show the mismatch as soon as the repeat field is as long as the password
+         * @returns {boolean} true when both are filled and differ
+         */
+        passwordMismatch() {
+            return this.repeatPassword.length >= this.password.length && this.repeatPassword !== this.password;
+        },
+    },
     mounted() {
         // TODO: Check if it is a database setup
 
@@ -123,40 +127,3 @@ export default {
     },
 };
 </script>
-
-<style lang="scss" scoped>
-.form-container {
-    display: flex;
-    align-items: center;
-    padding-top: 40px;
-    padding-bottom: 40px;
-}
-
-.form-floating {
-    > .form-select {
-        padding-left: 1.3rem;
-        padding-top: 1.525rem;
-        line-height: 1.35;
-
-        ~ label {
-            padding-left: 1.3rem;
-        }
-    }
-
-    > label {
-        padding-left: 1.3rem;
-    }
-
-    > .form-control {
-        padding-left: 1.3rem;
-    }
-}
-
-.form {
-    width: 100%;
-    max-width: 330px;
-    padding: 15px;
-    margin: auto;
-    text-align: center;
-}
-</style>

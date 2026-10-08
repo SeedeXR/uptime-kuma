@@ -5,7 +5,7 @@
                 {{ $t("Not available, please setup.") }}
             </p>
 
-            <ul class="list-group mb-3" style="border-radius: var(--ui-radius-sm)">
+            <ul class="list-group mb-3" style="border-radius: var(--ui-radius)">
                 <li v-for="(remoteBrowser, index) in $root.remoteBrowserList" :key="index" class="list-group-item">
                     {{ remoteBrowser.name }}
                     <br />

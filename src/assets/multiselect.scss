@@ -8,14 +8,14 @@
 }
 
 .multiselect__tags {
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     border: 1px solid #ced4da;
     min-height: 38px;
     padding: 6px 40px 0 8px;
 }
 
 .multiselect--active .multiselect__tags {
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
 }
 
 .multiselect__option--highlight {

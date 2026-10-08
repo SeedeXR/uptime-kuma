@@ -20,9 +20,7 @@
 }
 
 :root {
-    // One radius everywhere (owner spec: 2.5px). Two vars kept so controls/surfaces can diverge later.
-    --ui-radius-sm: 2.5px; // controls: buttons, inputs, list rows
-    --ui-radius: 2.5px; // surfaces: cards, panels, alerts
+    --ui-radius: 4px; // owner spec: every component at least 4px
 
     // Public status page colours (Statuspage-style)
     --status-up: #22c55e;
@@ -32,6 +30,15 @@
     --status-none: #e4e4e7;
     --status-muted: #71717a;
     --status-line: #e4e4e7;
+}
+
+// icon.svg picks its colour from the OS scheme inside <img>/<object>; follow the app theme instead
+.light :is(img[src$="/icon.svg"], object[data$="/icon.svg"]) {
+    filter: brightness(0);
+}
+
+.dark :is(img[src$="/icon.svg"], object[data$="/icon.svg"]) {
+    filter: brightness(0) invert(1);
 }
 
 .dark {
@@ -65,7 +72,7 @@ h2 {
 }
 
 textarea.form-control {
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
 }
 
 ::-webkit-scrollbar {
@@ -122,7 +129,7 @@ optgroup {
 // Scrollbar
 ::-webkit-scrollbar-thumb {
     background: #ccc;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
 }
 
 .modal {
@@ -161,7 +168,7 @@ optgroup {
 }
 
 .btn-sm {
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
 }
 
 .btn-primary {
@@ -235,7 +242,7 @@ optgroup {
 .btn-outline-normal {
     padding: 4px 10px;
     border: 1px solid #ced4da;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     background-color: transparent;
 
     .dark & {
@@ -564,7 +571,7 @@ optgroup {
         display: block;
         text-decoration: none;
         padding: 13px 15px 10px 15px;
-        border-radius: var(--ui-radius-sm);
+        border-radius: var(--ui-radius);
         transition: all ease-in-out 0.15s;
 
         &.disabled {
@@ -617,7 +624,7 @@ optgroup {
 [contenteditable="true"] {
     transition: all $easing-in 0.2s;
     background-color: rgba(239, 239, 239, 0.7);
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
 
     &.no-bg {
         background-color: transparent !important;
@@ -656,7 +663,7 @@ optgroup {
 }
 
 .vue-image-crop-upload .vicp-wrap {
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
 }
 
 .spinner {
@@ -686,7 +693,7 @@ h5.settings-subheading::after {
 .css-editor {
     /* we dont use `language-` classes anymore so that's why we need to add background and text color manually */
 
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     padding: 10px 5px;
     border: 1px solid #ced4da;
 

@@ -367,7 +367,7 @@ export default {
 
 .drag-over {
     border: 4px dashed $primary;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     background-color: $highlight-white;
 }
 

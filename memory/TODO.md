@@ -144,3 +144,29 @@ continue there. Update boxes as you go. **No commits.**
 - Team members: already shipped & live in prod (Settings → Users: add/reset/deactivate/delete; every user is a full admin, no roles).
 - Status page admin buttons: shown only to browsers holding an admin login token AND not on a status-page domain → public never sees them.
 - [ ] HUMAN: set SEEDE_ADMIN_PASSWORD in Coolify, deploy, log in as a.mkwizu@seedexr.com, then delete/deactivate the old `admin` user in Settings → Users if no longer wanted
+
+## Wave 8 — Upstream 2.5.5, new logo, split login, 4px radius
+- [x] Merged upstream stable **2.5.5** (commit f8e10332, local dev, not pushed). NOT upstream master (3.0.0-beta.0, unreleased). Functional only: TCP leak, stat_daily widening, 304 headers, MariaDB pool, RSS text, SFTP/NTP monitors, PM2 picker, new notification providers, login password reveal. Seede UI/icons/locales/CI removals kept.
+- [x] Verified merged code: build, eslint, stylelint, backend 266/266 (Docker), e2e 26/28 (same 2 pre-existing status-page fails)
+- [x] New logo (owner's "seedexr-logo-black 1 [Vectorized].svg"): public/icon.svg = framed mark (square, .glyph dark switch); public/brand-logo.svg = full SEEDE XR STUDIOS lockup; PNGs + favicon.ico regenerated (`ICON_CHANNEL=chrome node extra/generate-seede-icons.js`, now also writes favicon.ico). brand-logo-admin.svg removed (unused).
+- [x] icon.svg follows the APP theme (global .light/.dark filter in app.scss), not the OS scheme
+- [x] Login: no top nav; full-screen split — left MatrixRain.vue (B/W canvas digital rain, 24fps, reduced-motion static, hidden on phones), right logo + form. Username plain input to match upstream's HiddenInput password row; dark .btn-outline-primary made visible.
+- [x] Radius: owner minimum **4px** (--ui-radius-sm/--ui-radius, SCSS vars)
+- [x] branding.spec now checks the logo img alt (text header removed by design)
+- [ ] HUMAN: review + commit the uncommitted Wave 8 UI/logo changes; push dev/main when ready
+
+## Wave 9 — First-run setup redesign
+- [x] AuthLayout.vue: shared two-sided shell (MatrixRain left, logo + slot right) for Login, SetupDatabase, Setup
+- [x] Setup step 1: "Step 1 of 2", radio cards (SQLite preselected + Recommended, MariaDB/MySQL, Embedded when available), labelled MariaDB fields (host/port side by side), clean "Setting up your database" state; language picker removed (English only)
+- [x] Setup step 2: "Step 2 of 2", email-as-username guidance, show/hide password + accurate strength hint (server rule: letters+numbers, >=6), inline mismatch (Create disabled), "add teammates in Settings → Users"
+- [x] Fixed app-wide: doubled floating labels (placeholder now transparent in .form-floating), input-group inner corners squared, white flash between pages (index.html body:not(.light) dark)
+- [x] 4px radius verified by computed style; 20px field rhythm, 44px fields/buttons
+- [x] e2e 26/28 (setup spec passes on new UI; same 2 pre-existing status-page fails)
+
+## Wave 10 — Code review + ponytail review + security audit (details: SECURITY-AUDIT.md)
+- [x] Code review (10 findings): fixed MatrixRain reduced-motion resize, light status pages start light (server adds body.light), theme starts from real URL (no mount-time white flash), setup toast crash on network error, embedded MariaDB default/recommended when available, accurate password hint, input-group CSS consolidated into bootstrap-compat, dead .form-floating rule removed. Rejected: language picker (app is English-only by design), CLAUDE.md upstream-PR scope rule (private fork)
+- [x] Ponytail: StatusPage.isStatusPageHost() shared by HTTP lockdown + socket.io, statusLabel lookup map, single --ui-radius var, simpler passwordMismatch. Kept hand-written ICO header (PNG-as-.ico is flaky on Safari/Windows)
+- [x] Deps 32 → 13 prod advisories (critical 3 → 1); remaining are install-time/no-fix, documented
+- [x] Docker image runs the app as non-root `node` (entrypoint chowns legacy root-owned /app/data then setpriv); verified upgrade from root-owned volume, ping, setup, env admin, healthcheck
+- [x] Dashboard CSP: script-src 'self', connect-src 'self' + 360messenger; status pages keep analytics allowances. 0 violations
+- [x] Verified: eslint/stylelint/build, backend 266/266, e2e 26/28 (2 pre-existing), ZAP 0 High

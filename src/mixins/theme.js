@@ -7,7 +7,8 @@ export default {
             styleElapsedTime: localStorage.styleElapsedTime,
             statusPageTheme: "light",
             forceStatusPageTheme: false,
-            path: "",
+            // Real URL from the start: "" made the first paint light before the route resolved
+            path: location.pathname,
         };
     },
 

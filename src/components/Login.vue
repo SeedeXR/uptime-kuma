@@ -1,80 +1,71 @@
 <template>
-    <div class="form-container">
-        <div class="form">
-            <form aria-label="Login Form" class="pt-3" @submit.prevent="submit">
-                <div v-if="!tokenRequired" class="form-floating">
-                    <input
-                        id="floatingInput"
-                        v-model="username"
-                        type="text"
-                        class="form-control"
-                        placeholder="Username"
-                        autocomplete="username"
-                        required
-                    />
-                    <label for="floatingInput">{{ $t("Username") }}</label>
-                </div>
+    <AuthLayout>
+        <h1 class="auth-title">{{ $t("Welcome back") }}</h1>
+        <p class="auth-lead">{{ $t("loginLead") }}</p>
 
-                <div v-if="!tokenRequired" class="mt-3">
-                    <HiddenInput
-                        id="floatingPassword"
-                        v-model="password"
-                        :placeholder="$t('Password')"
-                        autocomplete="current-password"
-                        :required="true"
-                    />
-                </div>
+        <form aria-label="Login Form" class="auth-form" @submit.prevent="submit">
+            <template v-if="!tokenRequired">
+                <input
+                    id="floatingInput"
+                    v-model="username"
+                    type="text"
+                    class="form-control auth-input"
+                    :placeholder="$t('Username')"
+                    :aria-label="$t('Username')"
+                    autocomplete="username"
+                    required
+                />
 
-                <div v-if="tokenRequired">
-                    <div class="form-floating mt-3">
-                        <input
-                            id="otp"
-                            ref="otpInput"
-                            v-model="token"
-                            type="text"
-                            maxlength="6"
-                            class="form-control"
-                            placeholder="123456"
-                            autocomplete="one-time-code"
-                            required
-                        />
-                        <label for="otp">{{ $t("Token") }}</label>
-                    </div>
-                </div>
+                <HiddenInput
+                    id="floatingPassword"
+                    v-model="password"
+                    :placeholder="$t('Password')"
+                    autocomplete="current-password"
+                    :required="true"
+                />
+            </template>
 
-                <div class="form-check mb-3 mt-3 d-flex justify-content-center pe-4">
-                    <div class="form-check">
-                        <input
-                            id="remember"
-                            v-model="$root.remember"
-                            type="checkbox"
-                            value="remember-me"
-                            class="form-check-input"
-                        />
+            <div v-else>
+                <label for="otp" class="form-label">{{ $t("Token") }}</label>
+                <input
+                    id="otp"
+                    ref="otpInput"
+                    v-model="token"
+                    type="text"
+                    maxlength="6"
+                    class="form-control auth-input"
+                    placeholder="123456"
+                    autocomplete="one-time-code"
+                    required
+                />
+            </div>
 
-                        <label class="form-check-label" for="remember">
-                            {{ $t("Remember me") }}
-                        </label>
-                    </div>
-                </div>
-                <button class="w-100 btn btn-primary" type="submit" :disabled="processing">
-                    {{ $t("Login") }}
-                </button>
+            <div class="form-check">
+                <input id="remember" v-model="$root.remember" type="checkbox" value="remember-me" class="form-check-input" />
+                <label class="form-check-label" for="remember">
+                    {{ $t("Remember me") }}
+                </label>
+            </div>
 
-                <div v-if="res && !res.ok" class="alert alert-danger mt-3" role="alert">
-                    {{ $t(res.msg) }}
-                </div>
-            </form>
-        </div>
-    </div>
+            <button class="w-100 btn btn-primary" type="submit" :disabled="processing">
+                {{ $t("Login") }}
+            </button>
+
+            <div v-if="res && !res.ok" class="alert alert-danger mb-0" role="alert">
+                {{ $t(res.msg) }}
+            </div>
+        </form>
+    </AuthLayout>
 </template>
 
 <script>
 import HiddenInput from "./HiddenInput.vue";
+import AuthLayout from "./AuthLayout.vue";
 
 export default {
     components: {
         HiddenInput,
+        AuthLayout,
     },
     data() {
         return {
@@ -128,28 +119,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.form-container {
+.form-check {
     display: flex;
     align-items: center;
-    padding-top: 40px;
-    padding-bottom: 40px;
-}
+    gap: 8px;
+    padding-left: 0;
 
-.form-floating {
-    > label {
-        padding-left: 1.3rem;
+    .form-check-input {
+        float: none;
+        margin: 0;
     }
-
-    > .form-control {
-        padding-left: 1.3rem;
-    }
-}
-
-.form {
-    width: 100%;
-    max-width: 330px;
-    padding: 15px;
-    margin: auto;
-    text-align: center;
 }
 </style>

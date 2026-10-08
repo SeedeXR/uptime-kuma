@@ -117,3 +117,47 @@ server endpoints, external calls, or inline `<script>`. ZAP baseline: **0 FAIL /
     not exploitable disclosures (consistent with the pre-existing `npm audit` findings).
   - Non-Storable Content / Modern Web App [10049/10109] — informational (cache headers on
     dynamic responses; SPA detection). Not vulnerabilities.
+
+## Wave 10 — Full audit after upstream 2.5.5 + UI work (2026-10-08)
+
+Tools: npm audit (prod), trivy fs (secrets + misconfig), Semgrep 1.140 (p/javascript,
+p/nodejsscan, p/xss, p/secrets), OWASP ZAP quick scan (spider + active) against a set-up
+instance with a status page, monitors and a mapped status domain.
+
+### Dependencies — 32 → 13 prod advisories (critical 3 → 1, high 20 → 7)
+Fixed (all within the repo's `min-release-age=14` .npmrc guard):
+- `npm audit fix` (in-range lockfile updates)
+- same-major bumps: protobufjs ~7.6.6 (critical RCE), @grpc/grpc-js ~1.14.5, liquidjs ~10.29.0,
+  mysql2 ~3.24.4, qs ~6.16.0, ws ~8.21.3
+- majors already adopted by upstream master with no code changes: nodemailer ~10.0.10, redbean-node ~0.4.0
+- tar ~7.5.22 (direct; only used by extra/ scripts) + `import * as tar` in extra/release/lib.mjs (v7 has no default export)
+- overrides: lodash ^4.18.1, minimatch@^9 → ^9.0.7
+
+Accepted (documented, not runtime-reachable or no fix exists):
+| Package | Why |
+|---|---|
+| tar 6 / node-gyp / cacache / make-fetch-happen / http-cache-semantics / @tootallnate/once (via @louislam/sqlite3) | install-time only (native binary download/build); npm's "fix" is a bogus downgrade. http-cache-semantics 4.3.0 is inside the 14-day release-age window |
+| axios 0.x | no patched 0.x exists; upstream (incl. 3.0 master) still ships 0.33. Advisories need a pre-existing prototype pollution or browser-only formToJSON |
+| mssql / tedious / sprintf-js | DoS via format precision; only the MSSQL monitor with admin-set values; no non-major fix |
+
+### Static analysis
+- trivy: **0 secrets**. Misconfig that matters: `docker/Dockerfile.seede` ran as root → **fixed**:
+  `docker/seede-entrypoint.sh` chowns `/app/data` (handles volumes written by older root releases)
+  then `setpriv` drops to `node`. Trivy's static check still reports DS-0002 because the image's
+  last USER is root — the app process is not (verified at runtime). Other flagged Dockerfiles are
+  upstream builder/test images we don't ship.
+- Semgrep: 131 results, **0 in code this fork wrote**. Triaged upstream hits: SSRF (84) = the
+  product's purpose (monitors/notifications call admin-configured URLs); timing attack = bcrypt
+  compare; "NoSQLi" = parameterized SQL; badge "XSS" = badge-maker escapes; regexes are fixed
+  literals; Teltonika TLS bypass is an explicit opt-in. No actionable defects.
+
+### Dynamic (ZAP) — 0 High
+Remaining Mediums were all CSP. **Fixed:** route-aware CSP — the dashboard now gets
+`script-src 'self'` and `connect-src 'self' https://api.360messenger.com` (no `unsafe-inline`,
+no `https:` wildcard). Status pages (and `/`, which serves one on status domains) keep the
+permissive script/connect sources because they inline preload data and load admin-configured
+analytics. Verified: login over socket + 8 dashboard routes, 0 CSP violations, 0 console errors.
+Accepted: `style-src 'unsafe-inline'` (Vue `:style` bindings), "Private IP disclosure" (example
+IPs in bundled help text). ZAP also touched other local services (ports 3000/8080) — out of scope.
+Status-domain lockdown re-verified after refactor: /dashboard → 302, socket.io → 403 on the
+status domain; unaffected elsewhere.

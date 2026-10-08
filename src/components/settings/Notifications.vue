@@ -8,7 +8,7 @@
                 {{ $t("notificationDescription") }}
             </p>
 
-            <ul class="list-group mb-3" style="border-radius: var(--ui-radius-sm)">
+            <ul class="list-group mb-3" style="border-radius: var(--ui-radius)">
                 <li v-for="(notification, index) in $root.notificationList" :key="index" class="list-group-item">
                     {{ notification.name }}
                     <br />

@@ -150,15 +150,12 @@ class UptimeKumaServer {
             allowRequest: async (req, callback) => {
                 // Status-page domains are public-only: no login/admin socket there
                 const StatusPage = require("./model/status_page");
-                if (Object.keys(StatusPage.domainMappingList).length > 0) {
-                    let host = req.headers.host || "";
-                    if ((await Settings.get("trustProxy")) && req.headers["x-forwarded-host"]) {
-                        host = req.headers["x-forwarded-host"];
-                    }
-                    if (host.replace(/:\d+$/, "") in StatusPage.domainMappingList) {
-                        callback("Not available on a status page domain", false);
-                        return;
-                    }
+                if (
+                    Object.keys(StatusPage.domainMappingList).length > 0 &&
+                    StatusPage.isStatusPageHost(req.headers, await Settings.get("trustProxy"))
+                ) {
+                    callback("Not available on a status page domain", false);
+                    return;
                 }
 
                 let transport;

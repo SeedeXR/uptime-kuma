@@ -86,7 +86,7 @@ export default {
 .bar {
     flex: 1;
     min-width: 2px;
-    border-radius: var(--ui-radius-sm);
+    border-radius: var(--ui-radius);
     background: var(--status-none);
     transition: opacity 0.15s ease, transform 0.15s ease;
 
