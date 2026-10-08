@@ -2,6 +2,17 @@ const NotificationProvider = require("./notification-provider");
 const axios = require("axios");
 const { renderSeedeEmail } = require("./seede-email-template");
 
+/**
+ * Build Resend's "from": EMAIL_FROM may be a bare address or already "Name <address>"
+ * (wrapping the latter again gives "Name <Name <a@b>>", which Resend rejects with 422)
+ * @param {string} from Configured sender
+ * @param {string} name Display name for a bare address
+ * @returns {string} Valid from field
+ */
+function formatFrom(from, name) {
+    return /<[^<>\s]+@[^<>\s]+>$/.test(from) ? from : `${name} <${from}>`;
+}
+
 class Resend extends NotificationProvider {
     name = "Resend";
 
@@ -46,7 +57,7 @@ class Resend extends NotificationProvider {
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             timeout: 15000,
         });
-        const result = await axios.post("https://api.resend.com/emails", { from: `${fromName} <${fromEmail}>`, ...email }, config);
+        const result = await axios.post("https://api.resend.com/emails", { from: formatFrom(fromEmail, fromName), ...email }, config);
         if (result.status !== 200) {
             throw new Error(`Unexpected status code: ${result.status}`);
         }
@@ -54,3 +65,4 @@ class Resend extends NotificationProvider {
 }
 
 module.exports = Resend;
+module.exports.formatFrom = formatFrom;

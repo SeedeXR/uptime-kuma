@@ -1,6 +1,7 @@
 const { describe, test } = require("node:test");
 const assert = require("node:assert");
 const { renderSeedeEmail } = require("../../server/notification-providers/seede-email-template");
+const { formatFrom } = require("../../server/notification-providers/resend");
 
 describe("Seede email template", () => {
     test("escapes HTML in msg and monitor name (no injection)", () => {
@@ -28,5 +29,10 @@ describe("Seede email template", () => {
         const html = renderSeedeEmail({ msg: "hello" });
         assert.ok(html.includes("Seede"));
         assert.ok(html.includes("#121212"));
+    });
+
+    test("Resend sender: bare address gets the display name, 'Name <address>' is kept as-is", () => {
+        assert.strictEqual(formatFrom("alerts@mail.seedexr.com", "Seede XR"), "Seede XR <alerts@mail.seedexr.com>");
+        assert.strictEqual(formatFrom("Seede XR Services <noreply@mail.seedexr.com>", "Seede XR"), "Seede XR Services <noreply@mail.seedexr.com>");
     });
 });

@@ -190,3 +190,8 @@ single use; email via Resend env (RESEND_API_KEY + EMAIL_FROM).
 - Upstream navy dark colours (#232f3b/#282f39/#161b22/#070a10) replaced with brand neutrals
 - Verified: build, lint:prod, backend 266/266, e2e 28/30 (2 pre-existing), MCP Inspector CLI (official SDK client), curl matrix, reset flow incl. concurrency
 - Delivery: PR dev → main (owner rule), not direct merges
+
+## Wave 12 — Reset emails not sending (fixed)
+- Root cause (proven against the Resend API): EMAIL_FROM is "Seede XR Services <noreply@mail.seedexr.com>"; code wrapped it again → "Seede XR <Seede XR Services <…>>" → Resend 422 "Invalid `from` field". Same bug affected Resend monitor alerts. Fix: formatFrom() keeps "Name <address>" as-is, wraps bare addresses (+ test)
+- Failed send now clears the reset token (5-min cooldown no longer swallows retries); log includes Resend's error message
+- Prod also needs Settings → General → Primary Base URL set, or no link is built (logged: "Primary Base URL is not set")

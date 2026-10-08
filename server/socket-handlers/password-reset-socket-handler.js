@@ -80,10 +80,18 @@ module.exports.passwordResetSocketHandler = (socket) => {
                 R.isoDateTimeMillis(dayjs.utc().add(TOKEN_TTL_MINUTES, "minute")),
                 user.id,
             ]);
-            await sendResetEmail(user.username, `${baseURL}/reset-password?token=${token}`);
+            try {
+                await sendResetEmail(user.username, `${baseURL}/reset-password?token=${token}`);
+            } catch (e) {
+                // Unsent link: drop it so the resend cooldown doesn't block an immediate retry
+                await R.exec("UPDATE `user` SET reset_token_hash = NULL, reset_token_expires = NULL WHERE id = ?", [user.id]);
+                throw e;
+            }
             log.info("password-reset", `Reset link sent for user id ${user.id}`);
         } catch (e) {
-            log.error("password-reset", `Could not send reset email: ${e.message}`);
+            // Include Resend's own explanation (e.g. invalid sender, unverified domain) for the server log
+            const detail = e.response?.data?.message ? ` — ${e.response.data.message}` : "";
+            log.error("password-reset", `Could not send reset email: ${e.message}${detail}`);
         }
     });
 
