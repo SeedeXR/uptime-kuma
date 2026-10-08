@@ -983,6 +983,7 @@ let needSetup = false;
                 bean.gamedigGivenPortOnly = monitor.gamedigGivenPortOnly;
                 bean.gamedigToken = monitor.gamedigToken;
                 bean.remote_browser = monitor.remote_browser;
+                bean.screenshot_delay = monitor.screenshot_delay;
                 bean.smtpSecurity = monitor.smtpSecurity;
                 bean.snmpVersion = monitor.snmpVersion;
                 bean.snmpOid = monitor.snmpOid;
@@ -996,6 +997,15 @@ let needSetup = false;
                 bean.manual_status = monitor.manual_status;
                 bean.system_service_name = monitor.system_service_name;
                 bean.expected_tls_alert = monitor.expectedTlsAlert;
+                bean.sshUsername = monitor.sshUsername;
+                bean.sshPassword = monitor.sshPassword;
+                bean.sftpPath = monitor.sftpPath;
+                bean.sshPrivateKey = monitor.sshPrivateKey;
+                bean.sshPassphrase = monitor.sshPassphrase;
+                bean.sshAuthMethod = monitor.sshAuthMethod;
+                bean.ntp_stratum_threshold = monitor.ntpStratumThreshold;
+                bean.ntp_time_offset_threshold = monitor.ntpTimeOffsetThreshold;
+                bean.ntp_root_dispersion_threshold = monitor.ntpRootDispersionThreshold;
 
                 // ping advanced options
                 bean.ping_numeric = monitor.ping_numeric;
