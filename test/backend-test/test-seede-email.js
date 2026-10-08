@@ -1,7 +1,7 @@
 const { describe, test } = require("node:test");
 const assert = require("node:assert");
 const { renderSeedeEmail } = require("../../server/notification-providers/seede-email-template");
-const { formatFrom } = require("../../server/notification-providers/resend");
+const { senderFrom } = require("../../server/notification-providers/resend");
 
 describe("Seede email template", () => {
     test("escapes HTML in msg and monitor name (no injection)", () => {
@@ -31,8 +31,22 @@ describe("Seede email template", () => {
         assert.ok(html.includes("#121212"));
     });
 
-    test("Resend sender: bare address gets the display name, 'Name <address>' is kept as-is", () => {
-        assert.strictEqual(formatFrom("alerts@mail.seedexr.com", "Seede XR"), "Seede XR <alerts@mail.seedexr.com>");
-        assert.strictEqual(formatFrom("Seede XR Services <noreply@mail.seedexr.com>", "Seede XR"), "Seede XR Services <noreply@mail.seedexr.com>");
+    test("Resend sender: EMAIL_FROM is used exactly as written; legacy form fields still work", () => {
+        const saved = process.env.EMAIL_FROM;
+        try {
+            process.env.EMAIL_FROM = "Seede XR Services <noreply@mail.seedexr.com>";
+            assert.strictEqual(senderFrom({ resendFromEmail: "old@x.com", resendFromName: "Old" }), "Seede XR Services <noreply@mail.seedexr.com>");
+            process.env.EMAIL_FROM = "noreply@mail.seedexr.com";
+            assert.strictEqual(senderFrom(), "noreply@mail.seedexr.com");
+            delete process.env.EMAIL_FROM;
+            assert.strictEqual(senderFrom({ resendFromEmail: "old@x.com", resendFromName: "Old" }), "Old <old@x.com>");
+            assert.strictEqual(senderFrom(), "");
+        } finally {
+            if (saved === undefined) {
+                delete process.env.EMAIL_FROM;
+            } else {
+                process.env.EMAIL_FROM = saved;
+            }
+        }
     });
 });

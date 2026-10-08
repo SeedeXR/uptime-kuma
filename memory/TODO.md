@@ -195,3 +195,6 @@ single use; email via Resend env (RESEND_API_KEY + EMAIL_FROM).
 - Root cause (proven against the Resend API): EMAIL_FROM is "Seede XR Services <noreply@mail.seedexr.com>"; code wrapped it again → "Seede XR <Seede XR Services <…>>" → Resend 422 "Invalid `from` field". Same bug affected Resend monitor alerts. Fix: formatFrom() keeps "Name <address>" as-is, wraps bare addresses (+ test)
 - Failed send now clears the reset token (5-min cooldown no longer swallows retries); log includes Resend's error message
 - Prod also needs Settings → General → Primary Base URL set, or no link is built (logged: "Primary Base URL is not set")
+- Follow-up (owner): EMAIL_FROM is now passed to Resend verbatim (custom name lives in it); RESEND_FROM_NAME retired; verified via Resend GET /emails (from = as written, delivered)
+- PROD FINDING (Coolify logs via COOLIFY_MCP in .env): "SEEDE_ADMIN_PASSWORD is missing or too weak; admin … was not created" → a.mkwizu@seedexr.com doesn't exist in prod, so forgot-password silently does nothing for it. Coolify MCP can read env KEYS + logs and deploy, but cannot set env vars (owner must edit in Coolify UI)
+- [ ] HUMAN (Coolify UI): strong SEEDE_ADMIN_PASSWORD; EMAIL_FROM="<Name> <noreply@mail.seedexr.com>"; delete RESEND_FROM_NAME; set Primary Base URL in Settings → General; then redeploy

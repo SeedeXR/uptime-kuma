@@ -3,14 +3,20 @@ const axios = require("axios");
 const { renderSeedeEmail } = require("./seede-email-template");
 
 /**
- * Build Resend's "from": EMAIL_FROM may be a bare address or already "Name <address>"
- * (wrapping the latter again gives "Name <Name <a@b>>", which Resend rejects with 422)
- * @param {string} from Configured sender
- * @param {string} name Display name for a bare address
- * @returns {string} Valid from field
+ * Sender for Resend. EMAIL_FROM is used exactly as written: "noreply@domain", or
+ * "Custom Name <noreply@domain>" to show a sender name. Only notifications created before the
+ * env setup (per-notification From fields) get their name added here.
+ * @param {object} notification Notification settings (legacy fallback)
+ * @returns {string} Resend "from" value, or "" when nothing is configured
  */
-function formatFrom(from, name) {
-    return /<[^<>\s]+@[^<>\s]+>$/.test(from) ? from : `${name} <${from}>`;
+function senderFrom(notification = {}) {
+    const configured = (process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || "").trim();
+    if (configured) {
+        return configured;
+    }
+    const email = notification.resendFromEmail?.trim();
+    const name = notification.resendFromName?.trim();
+    return email ? (name ? `${name} <${email}>` : email) : "";
 }
 
 class Resend extends NotificationProvider {
@@ -46,18 +52,17 @@ class Resend extends NotificationProvider {
      */
     async deliver(email, notification = {}) {
         const apiKey = process.env.RESEND_API_KEY || notification.resendApiKey;
-        const fromEmail = (process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || notification.resendFromEmail || "").trim();
-        const fromName = process.env.RESEND_FROM_NAME || notification.resendFromName?.trim() || "Seede XR";
+        const from = senderFrom(notification);
 
-        if (!apiKey || !fromEmail) {
-            throw new Error("Resend is not configured: set RESEND_API_KEY and RESEND_FROM_EMAIL in the environment.");
+        if (!apiKey || !from) {
+            throw new Error("Resend is not configured: set RESEND_API_KEY and EMAIL_FROM in the environment.");
         }
 
         const config = this.getAxiosConfigWithProxy({
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             timeout: 15000,
         });
-        const result = await axios.post("https://api.resend.com/emails", { from: formatFrom(fromEmail, fromName), ...email }, config);
+        const result = await axios.post("https://api.resend.com/emails", { from, ...email }, config);
         if (result.status !== 200) {
             throw new Error(`Unexpected status code: ${result.status}`);
         }
@@ -65,4 +70,4 @@ class Resend extends NotificationProvider {
 }
 
 module.exports = Resend;
-module.exports.formatFrom = formatFrom;
+module.exports.senderFrom = senderFrom;

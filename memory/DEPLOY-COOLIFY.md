@@ -32,6 +32,12 @@ Hub images). Coolify can't rebuild those, and they'd ship the upstream brand. Ou
 | `NODE_ENV` | set to `production` (already set in image) | production |
 | `SEEDE_ADMIN_USERNAME` | Admin created on boot if missing (never overwritten) | `a.mkwizu@seedexr.com` (compose default) |
 | `SEEDE_ADMIN_PASSWORD` | Its initial password — **Coolify secret**, must not be "Too weak" or the admin is skipped (logged) | — |
+| `RESEND_API_KEY` | Resend API key for alert + password-reset emails | — |
+| `EMAIL_FROM` | Sender, used exactly as written. Custom name: `Seede XR <noreply@mail.seedexr.com>`; domain must be verified in Resend | — |
+
+`RESEND_FROM_NAME` is no longer used (put the name in `EMAIL_FROM`). Password-reset emails also need
+**Settings → General → Primary Base URL**. "Too weak" = fewer than 6 characters or only one kind of
+character (needs two of: lowercase, uppercase, numbers, symbols).
 
 DB type (SQLite vs external MariaDB) is chosen in the **setup wizard**, not via env,
 and stored in `/app/data/db-config.json`.
