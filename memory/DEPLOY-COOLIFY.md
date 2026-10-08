@@ -34,6 +34,7 @@ Hub images). Coolify can't rebuild those, and they'd ship the upstream brand. Ou
 | `SEEDE_ADMIN_PASSWORD` | Its initial password — **Coolify secret**, must not be "Too weak" or the admin is skipped (logged) | — |
 | `RESEND_API_KEY` | Resend API key for alert + password-reset emails | — |
 | `EMAIL_FROM` | Sender, used exactly as written. Custom name: `Seede XR <noreply@mail.seedexr.com>`; domain must be verified in Resend | — |
+| `SEEDE_PRIMARY_BASE_URL` | Seeds Settings → Primary Base URL on first boot if empty (reset links, MCP URL) | — |
 
 `RESEND_FROM_NAME` is no longer used (put the name in `EMAIL_FROM`). Password-reset emails also need
 **Settings → General → Primary Base URL**. "Too weak" = fewer than 6 characters or only one kind of
