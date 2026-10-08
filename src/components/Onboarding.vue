@@ -84,17 +84,16 @@ export default {
 
     methods: {
         /**
-         * Auto-start onboarding once per browser session on login (never under automation)
+         * Auto-start onboarding once per browser until finished or skipped (never under automation)
          * @returns {void}
          */
         maybeAutoStart() {
             if (navigator.webdriver) {
                 return;
             }
-            if (sessionStorage.getItem(STORAGE_KEY)) {
+            if (localStorage.getItem(STORAGE_KEY)) {
                 return;
             }
-            sessionStorage.setItem(STORAGE_KEY, "1");
             setTimeout(() => this.start(), 700);
         },
         /**
@@ -151,8 +150,8 @@ export default {
          * @returns {void}
          */
         complete() {
-            // Session guard is already set in maybeAutoStart; just close.
-            sessionStorage.setItem(STORAGE_KEY, "1");
+            // Persist across tabs/reloads; Settings → Help clears it to replay.
+            localStorage.setItem(STORAGE_KEY, "1");
             this.visible = false;
         },
     },

@@ -458,7 +458,7 @@ module.exports.statusPageSocketHandler = (socket) => {
             let statusPage = R.dispense("status_page");
             statusPage.slug = slug;
             statusPage.title = title;
-            statusPage.theme = "auto";
+            statusPage.theme = "dark";
             statusPage.icon = "";
             statusPage.autoRefreshInterval = 300;
             await R.store(statusPage);

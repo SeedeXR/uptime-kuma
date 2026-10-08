@@ -145,6 +145,19 @@ class UptimeKumaServer {
         this.io = new Server(this.httpServer, {
             cors,
             allowRequest: async (req, callback) => {
+                // Status-page domains are public-only: no login/admin socket there
+                const StatusPage = require("./model/status_page");
+                if (Object.keys(StatusPage.domainMappingList).length > 0) {
+                    let host = req.headers.host || "";
+                    if ((await Settings.get("trustProxy")) && req.headers["x-forwarded-host"]) {
+                        host = req.headers["x-forwarded-host"];
+                    }
+                    if (host.replace(/:\d+$/, "") in StatusPage.domainMappingList) {
+                        callback("Not available on a status page domain", false);
+                        return;
+                    }
+                }
+
                 let transport;
                 // It should be always true, but just in case, because this property is not documented
                 if (req._query) {

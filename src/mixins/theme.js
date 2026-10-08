@@ -12,9 +12,9 @@ export default {
     },
 
     mounted() {
-        // Default Light
+        // Default Dark
         if (!this.userTheme) {
-            this.userTheme = "auto";
+            this.userTheme = "dark";
         }
 
         // Default Heartbeat Bar

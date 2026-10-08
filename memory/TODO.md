@@ -124,3 +124,23 @@ continue there. Update boxes as you go. **No commits.**
 - Resend creds as runtime setting; Coolify instance; re-run ZAP on set-up instance.
 - Local `docker build -f docker/Dockerfile.seede` (Docker daemon was down here).
 - Full CROSS_BROWSER Playwright matrix (webkit/msedge/firefox) in CI/Linux.
+
+## Wave 6 — Premium dark UI, Statuspage-style public pages, status-domain lockdown
+- [x] Onboarding re-showed on every new tab/session (sessionStorage) → localStorage, shown until Finish/Skip; Help still replays it
+- [x] Shapes: hardcoded radii → `--ui-radius-sm` / `--ui-radius`, both **2.5px** per owner (was 1.5px; briefly 10/16px); pills/badges/bars 2.5px too, only the toggle-switch track stays round; Tailwind radius overrides removed. **Brand rule "max 1.5px radius" is retired by owner request (2026-10-08).**
+- [x] Dark default: dashboard userTheme default `dark`; new status pages created with theme `dark`
+- [x] Public status page (status.claude.com style): header + RSS "Subscribe to updates", coloured overall banner, per-monitor "Operational/Major Outage/…" label, 90-day daily uptime bars (`DailyUptimeBar.vue`, 30 days on phones) fed by new `dailyList` in `/api/status-page/heartbeat/:slug` (UptimeCalculator daily buckets). Edit mode keeps the old heartbeat bar.
+- [x] Status-page domains (Status Page → Domain Names) are public-only: HTTP middleware in server.js redirects dashboard/admin paths to `/`; socket.io refuses handshakes for those hosts (uptime-kuma-server.js allowRequest). Admin buttons hidden there.
+- [x] More padding: buttons, inputs, selects (chevron room kept), dropdowns, modals, cards, alerts, list rows, badges, `.shadow-box` 10→16px (big-padding 20→28px)
+- [x] Removed duplicate feed setInterval in StatusPage.vue mount
+- [x] Verified: build, eslint 0 errors, stylelint 0, e2e 26/28 (2 status-page fails are pre-existing — same on stashed baseline), manual light/dark/mobile/edit-mode screenshots, curl matrix for lockdown
+- [ ] HUMAN: give the dashboard its own hostname in Coolify (e.g. monitor.seedexr.com or the Coolify sslip.io URL) BEFORE adding status.seedexr.com to the status page's Domain Names
+- [ ] Follow-up: feedInterval is never cleared on unmount (pre-existing); product switcher across status pages not built (each product = own status page slug/domain)
+
+## Wave 7 — Admin bootstrap + team
+- [x] `User.ensureAdminFromEnv` (server/model/user.js), called in initDatabase before the needSetup check: creates SEEDE_ADMIN_USERNAME with SEEDE_ADMIN_PASSWORD if missing; never overwrites; weak/missing password → logged, skipped. Fresh instance with the env set skips the setup wizard.
+- [x] compose.coolify.yaml defaults username to a.mkwizu@seedexr.com; password is a Coolify secret. .env.example + DEPLOY-COOLIFY.md updated.
+- [x] Test: test/backend-test/test-seede-admin-bootstrap.js (2 pass). E2E: real server created the user, socket login ok / wrong password rejected.
+- Team members: already shipped & live in prod (Settings → Users: add/reset/deactivate/delete; every user is a full admin, no roles).
+- Status page admin buttons: shown only to browsers holding an admin login token AND not on a status-page domain → public never sees them.
+- [ ] HUMAN: set SEEDE_ADMIN_PASSWORD in Coolify, deploy, log in as a.mkwizu@seedexr.com, then delete/deactivate the old `admin` user in Settings → Users if no longer wanted

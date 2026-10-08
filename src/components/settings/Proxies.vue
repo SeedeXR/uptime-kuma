@@ -9,7 +9,7 @@
                 {{ $t("proxyDescription") }}
             </p>
 
-            <ul class="list-group mb-3" style="border-radius: 1.5px">
+            <ul class="list-group mb-3" style="border-radius: var(--ui-radius-sm)">
                 <li v-for="(proxy, index) in $root.proxyList" :key="index" class="list-group-item">
                     {{ proxy.host }}:{{ proxy.port }} ({{ proxy.protocol }})
                     <span v-if="proxy.default === true" class="badge bg-primary ms-2">{{ $t("Default") }}</span>

@@ -8,7 +8,7 @@ import {
     HeartPulse, Images, Info, Link, List, Pause, Pencil, Play, Plus, CirclePlus,
     CircleHelp, Save, Search, LogOut, LoaderCircle, LayoutList, Gauge, X, CircleX,
     Trash2, Undo2, Unlink, Upload, Wrench, Circle,
-    ChevronLeft, ChevronRight, Menu,
+    ChevronLeft, ChevronRight, Menu, Rss,
 } from "lucide-vue-next";
 
 // Seede XR uses Lucide icons. This wrapper keeps the existing
@@ -64,6 +64,7 @@ const iconMap = {
     "unlink": Unlink,
     "upload": Upload,
     "wrench": Wrench,
+    "rss": Rss,
 };
 
 const sizeMap = {
