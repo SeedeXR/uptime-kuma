@@ -1949,6 +1949,14 @@ async function initDatabase(testMode = false) {
 
     await User.ensureAdminFromEnv(process.env);
 
+    // Seed Settings → Primary Base URL (used for reset links and the MCP URL) from the deploy env on
+    // first boot; a value set in the UI always wins
+    const envBaseURL = (process.env.SEEDE_PRIMARY_BASE_URL || "").trim().replace(/\/+$/, "");
+    if (/^https?:\/\/[^/]+/.test(envBaseURL) && !(await Settings.get("primaryBaseURL"))) {
+        await Settings.set("primaryBaseURL", envBaseURL, "general");
+        log.info("server", `Primary Base URL set from SEEDE_PRIMARY_BASE_URL: ${envBaseURL}`);
+    }
+
     // If there is no record in user table, it is a new Seede XR instance, need to setup
     if ((await R.knex("user").count("id as count").first()).count === 0) {
         log.info("server", "No user, need setup");
