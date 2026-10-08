@@ -13,20 +13,20 @@
                 <p class="auth-lead mb-0">{{ $t("setupDatabaseChooseDatabase") }}</p>
             </div>
 
-            <div class="db-options" role="radiogroup" :aria-label="$t('Choose a database')">
+            <div class="choice-cards" role="radiogroup" :aria-label="$t('Choose a database')">
                 <label
                     v-for="option in dbOptions"
                     :key="option.value"
-                    class="db-option"
+                    class="choice-card"
                     :class="{ active: dbConfig.type === option.value }"
                 >
-                    <input v-model="dbConfig.type" type="radio" name="db-type" :value="option.value" class="db-radio" />
-                    <span class="db-option-body">
-                        <span class="db-option-title">
+                    <input v-model="dbConfig.type" type="radio" name="db-type" :value="option.value" />
+                    <span>
+                        <span class="choice-title">
                             {{ option.title }}
                             <span v-if="option.recommended" class="badge">{{ $t("Recommended") }}</span>
                         </span>
-                        <span class="db-option-desc">{{ $t(option.desc) }}</span>
+                        <span class="choice-desc">{{ $t(option.desc) }}</span>
                     </span>
                 </label>
             </div>
@@ -193,99 +193,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.db-options {
-    display: grid;
-    gap: 12px;
-}
-
-.db-option {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    padding: 16px 18px;
-    border: 1px solid #e6e6e6;
-    border-radius: var(--ui-radius);
-    cursor: pointer;
-    transition: border-color 0.15s ease, background-color 0.15s ease;
-
-    &:hover {
-        border-color: #9a9a9a;
-    }
-
-    &.active {
-        border-color: #121212;
-        background-color: rgba(18, 18, 18, 0.03);
-    }
+.choice-title .badge {
+    font-size: 0.6875rem;
+    background: #121212;
+    color: #fff;
 
     .dark & {
-        border-color: #2a2a2a;
-
-        &:hover {
-            border-color: #6b6b6b;
-        }
-
-        &.active {
-            border-color: #fff;
-            background-color: rgba(255, 255, 255, 0.04);
-        }
-    }
-}
-
-.db-radio {
-    appearance: none;
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    margin-top: 3px;
-    border: 1.5px solid #9a9a9a;
-    border-radius: 50%;
-
-    &:checked {
-        border-color: #121212;
-        background: radial-gradient(circle, #121212 0 4px, transparent 4.5px);
-    }
-
-    &:focus-visible {
-        outline: 2px solid #9a9a9a;
-        outline-offset: 2px;
-    }
-
-    .dark &:checked {
-        border-color: #fff;
-        background: radial-gradient(circle, #fff 0 4px, transparent 4.5px);
-    }
-}
-
-.db-option-body {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.db-option-title {
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .badge {
-        font-size: 0.6875rem;
-        background: #121212;
-        color: #fff;
-
-        .dark & {
-            background: #fff;
-            color: #121212;
-        }
-    }
-}
-
-.db-option-desc {
-    font-size: 0.8125rem;
-    color: #6b6b6b;
-
-    .dark & {
-        color: #9a9a9a;
+        background: #fff;
+        color: #121212;
     }
 }
 

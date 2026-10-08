@@ -205,6 +205,7 @@ const { maintenanceSocketHandler } = require("./socket-handlers/maintenance-sock
 const { apiKeySocketHandler } = require("./socket-handlers/api-key-socket-handler");
 const { generalSocketHandler } = require("./socket-handlers/general-socket-handler");
 const { userSocketHandler } = require("./socket-handlers/user-socket-handler");
+const { passwordResetSocketHandler } = require("./socket-handlers/password-reset-socket-handler");
 const { Settings } = require("./settings");
 const apicache = require("./modules/apicache");
 const { resetChrome } = require("./monitor-types/real-browser-monitor-type");
@@ -422,6 +423,9 @@ let needSetup = false;
     // Status Page Router
     const statusPageRouter = require("./routers/status-page-router");
     app.use(statusPageRouter);
+
+    // MCP endpoint (/mcp) for AI clients, authenticated with MCP tokens (Settings → MCP)
+    app.use(require("./routers/mcp-router")({ pauseMonitor, startMonitor, updateMonitorNotification }));
 
     // Universal Route Handler, must be at the end of all express routes.
     app.get("*", async (_request, response) => {
@@ -1795,6 +1799,7 @@ let needSetup = false;
         generalSocketHandler(socket, server);
         chartSocketHandler(socket);
         userSocketHandler(socket);
+        passwordResetSocketHandler(socket);
 
         log.debug("server", "added all socket handlers");
 

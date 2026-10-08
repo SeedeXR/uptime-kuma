@@ -545,3 +545,4 @@ function checkSlug(slug) {
         throw new Error("Invalid Slug");
     }
 }
+module.exports.checkSlug = checkSlug;

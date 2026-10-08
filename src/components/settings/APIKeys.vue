@@ -91,8 +91,7 @@ export default {
     },
     computed: {
         keyList() {
-            let result = Object.values(this.$root.apiKeyList);
-            return result;
+            return Object.values(this.$root.apiKeyList).filter((k) => !k.scope);
         },
         settings() {
             return this.$parent.$parent.$parent.settings;
