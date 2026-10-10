@@ -9,6 +9,7 @@ const { UptimeCalculator } = require("../uptime-calculator");
 const { UptimeKumaServer } = require("../uptime-kuma-server");
 const checkVersion = require("../check-version");
 const { checkSlug } = require("../socket-handlers/status-page-socket-handler");
+const apicache = require("../modules/apicache");
 
 // Model Context Protocol over Streamable HTTP, stateless (JSON responses, no SSE stream).
 // Auth: "Authorization: Bearer <token>" with an MCP token from Settings → MCP.
@@ -129,6 +130,53 @@ async function discoverEndpoints(specUrl, baseUrl) {
         });
     }
     return { baseUrl, endpoints: endpoints.slice(0, 100), skipped };
+}
+
+/**
+ * Put monitors on a status page in the named group (reused if the page has it, else created at
+ * the end). Monitors already anywhere on the page are skipped, so calls are safe to repeat.
+ * @param {object} page status_page row
+ * @param {number[]} monitorIds Monitor ids (validated to exist)
+ * @param {string} groupName Group heading; default: the page's first group, else "Services"
+ * @returns {Promise<object>} { group, added, alreadyOnPage }
+ */
+async function addMonitorsToPage(page, monitorIds, groupName) {
+    const ids = [...new Set(monitorIds.map(Number))];
+    if (ids.length === 0 || ids.length > 100 || ids.some((id) => !Number.isInteger(id))) {
+        throw new Error("Pass 1–100 integer monitorIds (from list_monitors)");
+    }
+    const known = new Set(await R.getCol("SELECT id FROM monitor"));
+    const missing = ids.filter((id) => !known.has(id));
+    if (missing.length) {
+        throw new Error(`Unknown monitor ids: ${missing.join(", ")}`);
+    }
+
+    const groups = await R.getAll("SELECT id, name, weight FROM `group` WHERE status_page_id = ? ORDER BY weight", [page.id]);
+    let group = groupName ? groups.find((g) => g.name === groupName) : groups[0];
+    if (!group) {
+        const bean = R.dispense("group");
+        bean.name = groupName || "Services";
+        bean.public = true;
+        bean.active = true;
+        bean.weight = groups.length + 1;
+        bean.status_page_id = page.id;
+        await R.store(bean);
+        group = { id: bean.id, name: bean.name };
+    }
+
+    const onPage = new Set(
+        await R.getCol("SELECT mg.monitor_id FROM monitor_group mg JOIN `group` g ON g.id = mg.group_id WHERE g.status_page_id = ?", [page.id])
+    );
+    let weight = (await R.getCell("SELECT MAX(weight) FROM monitor_group WHERE group_id = ?", [group.id])) || 0;
+    const added = [];
+    for (const id of ids) {
+        if (!onPage.has(id)) {
+            await R.exec("INSERT INTO monitor_group (monitor_id, group_id, weight) VALUES (?, ?, ?)", [id, group.id, ++weight]);
+            added.push(id);
+        }
+    }
+    apicache.clear(); // public status page responses are cached for minutes
+    return { group: group.name, added, alreadyOnPage: ids.filter((id) => onPage.has(id)) };
 }
 
 /**
@@ -394,12 +442,6 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
                 if (await R.findOne("status_page", " slug = ? ", [slug])) {
                     throw new Error(`A status page with slug '${slug}' already exists`);
                 }
-                const known = new Set(await R.getCol("SELECT id FROM monitor"));
-                const missing = monitorIds.filter((id) => !known.has(id));
-                if (missing.length) {
-                    throw new Error(`Unknown monitor ids: ${missing.join(", ")}`);
-                }
-
                 const page = R.dispense("status_page");
                 page.slug = slug;
                 page.title = String(title).trim();
@@ -409,20 +451,34 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
                 page.autoRefreshInterval = 300;
                 await R.store(page);
 
-                if (monitorIds.length) {
-                    const group = R.dispense("group");
-                    group.name = groupName || "Services";
-                    group.public = true;
-                    group.active = true;
-                    group.weight = 1;
-                    group.status_page_id = page.id;
-                    await R.store(group);
-                    for (const [i, id] of monitorIds.entries()) {
-                        await R.exec("INSERT INTO monitor_group (monitor_id, group_id, weight) VALUES (?, ?, ?)", [id, group.id, i + 1]);
-                    }
-                }
+                const added = monitorIds.length ? (await addMonitorsToPage(page, monitorIds, groupName)).added : [];
                 const base = ((await Settings.get("primaryBaseURL")) || "").replace(/\/+$/, "");
-                return { slug, title: page.title, url: `${base}/status/${slug}`, monitors: monitorIds.length };
+                return { slug, title: page.title, url: `${base}/status/${slug}`, monitors: added.length };
+            },
+        },
+        {
+            name: "add_monitors_to_status_page",
+            description:
+                "Add monitors to an existing status page (see list_status_pages). They go into the named group, which is created if the page doesn't have it; default is the page's first group. Monitors already on the page are skipped. Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    slug: { type: "string", description: "Status page slug (from list_status_pages)" },
+                    monitorIds: { type: "array", items: { type: "integer" }, minItems: 1, maxItems: 100, description: "Monitors to add (from list_monitors)" },
+                    groupName: { type: "string", description: "Group heading to add them under; created if missing" },
+                },
+                required: ["slug", "monitorIds"],
+            },
+            write: true,
+            run: async ({ slug, monitorIds = [], groupName }) => {
+                slug = String(slug || "").trim().toLowerCase();
+                const page = await R.findOne("status_page", " slug = ? ", [slug]);
+                if (!page) {
+                    throw new Error(`No status page with slug '${slug}' (see list_status_pages)`);
+                }
+                const result = await addMonitorsToPage(page, monitorIds, groupName);
+                const base = ((await Settings.get("primaryBaseURL")) || "").replace(/\/+$/, "");
+                return { slug, url: `${base}/status/${slug}`, ...result };
             },
         },
         {
