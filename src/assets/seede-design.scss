@@ -153,8 +153,16 @@ $dk-fog: #9a9a9a;
     }
 
     // Never render black text on the dark surface
-    .btn-primary { background-color: #fff; border-color: #fff; color: $ink; }
-    .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: $muted; border-color: $muted; color: $ink; }
+    // Stays white in every state: grey on a black page read as "disabled". Hover = soft glow ring,
+    // pressed = near-white, keyboard focus = visible ring; no lingering grey after a click.
+    .btn-primary, .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active {
+        background-color: #fff;
+        border-color: #fff;
+        color: $ink;
+    }
+    .btn-primary:hover:not(:disabled) { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18); }
+    .btn-primary:active:not(:disabled) { background-color: #ececec; border-color: #ececec; }
+    .btn-primary:focus-visible { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35); }
 }
 
 // ---------- Surfaces: dropdowns / modals / cards ----------

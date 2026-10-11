@@ -183,21 +183,7 @@ optgroup {
         border-color: $highlight;
     }
 
-    // Dark mode: invert the brand accent so a black button stays visible on a black bg
-    .dark & {
-        color: $dark-font-color2;
-        background-color: white;
-        border-color: white;
-
-        &:hover,
-        &:active,
-        &:focus,
-        &.active {
-            color: $dark-font-color2;
-            background-color: $secondary-text;
-            border-color: $secondary-text;
-        }
-    }
+    // Dark mode colours + states live in seede-design.scss (single definition)
 }
 
 .btn-normal {

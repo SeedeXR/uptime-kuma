@@ -273,7 +273,7 @@
     "Read only": "Read only",
     "Read & write": "Read & write",
     "mcpReadDesc": "System overview, monitors, incidents and status pages.",
-    "mcpWriteDesc": "Everything in read only, plus create monitors and status pages, discover a system's APIs, and pause or resume monitors.",
+    "mcpWriteDesc": "Everything in read only, plus create monitors and status pages, add monitors to status pages, discover a system's APIs, and pause or resume monitors.",
     "mcpDays": "{0} days",
     "Tokens": "Tokens",
     "mcpNoTokens": "No MCP tokens yet.",
