@@ -206,3 +206,10 @@ single use; email via Resend env (RESEND_API_KEY + EMAIL_FROM).
 - [x] Primary Base URL → https://monitor.seedexr.com (setSettings over monitor host); Coolify SEEDE_PRIMARY_BASE_URL + compose default updated
 - [x] status.seedexr.com mapped to status page seedexr-website (saveStatusPage with unchanged config/groups; done over monitor host since status host refuses admin sockets)
 - [x] Verified: public host serves status page at /, redirects dashboard/settings/login/reset/metrics/mcp to /, socket.io 403; monitor host dashboard 200, socket 200, /mcp 401 without token
+
+## Wave 14 — MCP dashboard parity (2026-10-11)
+- [x] server/mcp-ui-actions.js: MCP runs the dashboard's own socket handlers for the token's user (virtual socket per user, handlers registered once via server.js onConnection(socket, {mcp:true})). ACTIONS catalog = 63 allowlisted actions (read vs write; credential-revealing reads need write). Dashboard-only on purpose: login/session, users, passwords, 2FA, API/MCP tokens, settings (all password-gated in the UI)
+- [x] New tools: list_ui_actions, ui_action, update_monitor (rejects unknown fields, verifies the save applied each one), delete_monitor, update_status_page, rename_status_page_group, delete_status_page_group, remove_monitors_from_status_page, delete_status_page. pause/resume + create/add status-page tools now go through the dashboard handlers too
+- [x] Bug (reported by njozi session): add_monitors_to_status_page created a missing group even when nothing needed adding → addToGroups only creates when something goes in
+- [x] Code review fixes: list reads reuse client.js builders (they now return what they push) + server.getMaintenanceJSONList (correct recurring status, camelCase docker hosts); status-page edits load groups from DB so send_url/custom_url survive; no-op edits skip the save; handler map cached per user; single write path for status pages
+- [x] Tests: unit test-mcp-ui-actions.js (9), e2e mcp.spec.js parity scenario (rename, page title, group ops, regression, ui_action, dashboard-only boundary), full e2e 30/32 (2 pre-existing)

@@ -9,7 +9,7 @@ const { UptimeCalculator } = require("../uptime-calculator");
 const { UptimeKumaServer } = require("../uptime-kuma-server");
 const checkVersion = require("../check-version");
 const { checkSlug } = require("../socket-handlers/status-page-socket-handler");
-const apicache = require("../modules/apicache");
+const { ACTIONS, runAction } = require("../mcp-ui-actions");
 
 // Model Context Protocol over Streamable HTTP, stateless (JSON responses, no SSE stream).
 // Auth: "Authorization: Bearer <token>" with an MCP token from Settings → MCP.
@@ -133,15 +133,12 @@ async function discoverEndpoints(specUrl, baseUrl) {
 }
 
 /**
- * Put monitors on a status page in the named group (reused if the page has it, else created at
- * the end). Monitors already anywhere on the page are skipped, so calls are safe to repeat.
- * @param {object} page status_page row
- * @param {number[]} monitorIds Monitor ids (validated to exist)
- * @param {string} groupName Group heading; default: the page's first group, else "Services"
- * @returns {Promise<object>} { group, added, alreadyOnPage }
+ * Validate monitor ids for status-page tools
+ * @param {number[]} monitorIds Requested ids
+ * @returns {Promise<number[]>} unique ids, all existing
  */
-async function addMonitorsToPage(page, monitorIds, groupName) {
-    const ids = [...new Set(monitorIds.map(Number))];
+async function checkMonitorIds(monitorIds) {
+    const ids = [...new Set((monitorIds || []).map(Number))];
     if (ids.length === 0 || ids.length > 100 || ids.some((id) => !Number.isInteger(id))) {
         throw new Error("Pass 1–100 integer monitorIds (from list_monitors)");
     }
@@ -150,42 +147,102 @@ async function addMonitorsToPage(page, monitorIds, groupName) {
     if (missing.length) {
         throw new Error(`Unknown monitor ids: ${missing.join(", ")}`);
     }
-
-    const groups = await R.getAll("SELECT id, name, weight FROM `group` WHERE status_page_id = ? ORDER BY weight", [page.id]);
-    let group = groupName ? groups.find((g) => g.name === groupName) : groups[0];
-    if (!group) {
-        const bean = R.dispense("group");
-        bean.name = groupName || "Services";
-        bean.public = true;
-        bean.active = true;
-        bean.weight = groups.length + 1;
-        bean.status_page_id = page.id;
-        await R.store(bean);
-        group = { id: bean.id, name: bean.name };
-    }
-
-    const onPage = new Set(
-        await R.getCol("SELECT mg.monitor_id FROM monitor_group mg JOIN `group` g ON g.id = mg.group_id WHERE g.status_page_id = ?", [page.id])
-    );
-    let weight = (await R.getCell("SELECT MAX(weight) FROM monitor_group WHERE group_id = ?", [group.id])) || 0;
-    const added = [];
-    for (const id of ids) {
-        if (!onPage.has(id)) {
-            await R.exec("INSERT INTO monitor_group (monitor_id, group_id, weight) VALUES (?, ?, ?)", [id, group.id, ++weight]);
-            added.push(id);
-        }
-    }
-    apicache.clear(); // public status page responses are cached for minutes
-    return { group: group.name, added, alreadyOnPage: ids.filter((id) => onPage.has(id)) };
+    return ids;
 }
 
 /**
- * Build the MCP router. Pause/resume come from server.js so monitor lifecycles stay in one place.
- * @param {{pauseMonitor: Function, startMonitor: Function, updateMonitorNotification: Function}} actions monitor functions from server.js
+ * Put monitors into a page's group list (in memory; the caller saves). Monitors already anywhere
+ * on the page are skipped, so calls are safe to repeat; a missing group is only created when
+ * something actually goes into it.
+ * @param {object[]} groups Page groups as the editor saves them
+ * @param {number[]} ids Monitor ids to add
+ * @param {string} groupName Group heading; default: the page's first group, else "Services"
+ * @returns {object} { group, added, alreadyOnPage, noChange }
+ */
+function addToGroups(groups, ids, groupName) {
+    const onPage = new Set(groups.flatMap((g) => g.monitorList.map((m) => m.id)));
+    const added = ids.filter((id) => !onPage.has(id));
+    const alreadyOnPage = ids.filter((id) => onPage.has(id));
+    if (added.length === 0) {
+        return { group: null, added, alreadyOnPage, noChange: true };
+    }
+    let group = groupName ? groups.find((g) => g.name === groupName) : groups[0];
+    if (!group) {
+        group = { name: groupName || "Services", monitorList: [] };
+        groups.push(group);
+    }
+    group.monitorList.push(...added.map((id) => ({ id })));
+    return { group: group.name, added, alreadyOnPage };
+}
+
+/**
+ * Build the MCP router. Writes go through the dashboard's own socket handlers (see mcp-ui-actions) so MCP and UI behave the same.
+ * @param {{startMonitor: Function, updateMonitorNotification: Function, registerHandlers: Function}} actions
+ *   functions from server.js; registerHandlers(socket) registers every dashboard socket handler
  * @returns {express.Router} router serving /mcp
  */
-module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMonitorNotification }) {
+module.exports = function createMcpRouter({ startMonitor, updateMonitorNotification, registerHandlers }) {
     const server = UptimeKumaServer.getInstance();
+
+    /**
+     * Run a dashboard action as the token's user; a failed reply becomes an error the model can read
+     * @param {object} key verified api_key row
+     * @param {string} action Action name (see mcp-ui-actions ACTIONS)
+     * @param {Array} args Positional arguments
+     * @returns {Promise<object>} the handler's reply
+     */
+    async function act(key, action, args) {
+        const res = await runAction(registerHandlers, key, action, args);
+        if (res && res.ok === false) {
+            throw new Error(res.msg || `${action} failed`);
+        }
+        return res;
+    }
+
+    /**
+     * Change a status page through the dashboard's own save handler: load its current config and
+     * groups, let `edit` change them, save the whole page (exactly what the page editor does)
+     * @param {object} key verified api_key row
+     * @param {string} slug Status page slug
+     * @param {Function} edit (config, groups) => result object (mutates config/groups in place;
+     *   return noChange: true to skip the save)
+     * @returns {Promise<object>} edit's result plus the page URL
+     */
+    async function editStatusPage(key, slug, edit) {
+        slug = String(slug || "").trim().toLowerCase();
+        const page = await R.findOne("status_page", " slug = ? ", [slug]);
+        if (!page) {
+            throw new Error(`No status page with slug '${slug}' (see list_status_pages)`);
+        }
+        const { config } = await act(key, "getStatusPage", [slug]);
+        // Groups as the editor saves them, read from the DB so each monitor's link settings
+        // (send_url / custom_url, hidden from the public JSON) survive the save
+        const groups = await R.getAll("SELECT id, name FROM `group` WHERE status_page_id = ? ORDER BY weight", [page.id]);
+        for (const group of groups) {
+            const rows = await R.getAll("SELECT monitor_id, send_url, custom_url FROM monitor_group WHERE group_id = ? ORDER BY weight", [group.id]);
+            group.monitorList = rows.map((r) => ({ id: r.monitor_id, sendUrl: !!r.send_url, url: r.custom_url }));
+        }
+        const { noChange, ...result } = await edit(config, groups);
+        if (!noChange) {
+            await act(key, "saveStatusPage", [slug, config, config.icon, groups]);
+        }
+        const base = ((await Settings.get("primaryBaseURL")) || "").replace(/\/+$/, "");
+        return { slug: config.slug, url: `${base}/status/${config.slug}`, ...result };
+    }
+
+    /**
+     * Find a group on a status page by its heading
+     * @param {object[]} groups Page groups
+     * @param {string} name Group heading
+     * @returns {object} the group
+     */
+    function findGroup(groups, name) {
+        const group = groups.find((g) => g.name === name);
+        if (!group) {
+            throw new Error(`No group '${name}' on this page. Groups: ${groups.map((g) => `'${g.name}'`).join(", ") || "none"}`);
+        }
+        return group;
+    }
 
     /**
      * Create and start one HTTP(S) monitor with the same defaults as the dashboard form
@@ -357,8 +414,7 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
             inputSchema: idArg,
             write: true,
             run: async ({ id }, key) => {
-                await pauseMonitor(key.user_id, id);
-                await server.sendUpdateMonitorIntoList({ userID: key.user_id }, id);
+                await act(key, "pauseMonitor", [id]);
                 return { id, paused: true };
             },
         },
@@ -433,27 +489,23 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
                 required: ["slug", "title"],
             },
             write: true,
-            run: async ({ slug, title, description, monitorIds = [], groupName }) => {
+            run: async ({ slug, title, description, monitorIds = [], groupName }, key) => {
                 slug = String(slug || "").trim().toLowerCase();
+                title = String(title || "").trim();
                 checkSlug(slug);
-                if (!String(title || "").trim()) {
+                if (!title) {
                     throw new Error("title is required");
                 }
                 if (await R.findOne("status_page", " slug = ? ", [slug])) {
                     throw new Error(`A status page with slug '${slug}' already exists`);
                 }
-                const page = R.dispense("status_page");
-                page.slug = slug;
-                page.title = String(title).trim();
-                page.description = description || null;
-                page.theme = "dark";
-                page.icon = "";
-                page.autoRefreshInterval = 300;
-                await R.store(page);
-
-                const added = monitorIds.length ? (await addMonitorsToPage(page, monitorIds, groupName)).added : [];
-                const base = ((await Settings.get("primaryBaseURL")) || "").replace(/\/+$/, "");
-                return { slug, title: page.title, url: `${base}/status/${slug}`, monitors: added.length };
+                const ids = monitorIds.length ? await checkMonitorIds(monitorIds) : [];
+                await act(key, "addStatusPage", [title, slug]); // dashboard defaults (theme, refresh…)
+                const result = await editStatusPage(key, slug, (config, groups) => {
+                    config.description = description || config.description;
+                    return { added: ids.length ? addToGroups(groups, ids, groupName).added : [], noChange: !description && !ids.length };
+                });
+                return { slug, title, url: result.url, monitors: result.added.length };
             },
         },
         {
@@ -470,16 +522,216 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
                 required: ["slug", "monitorIds"],
             },
             write: true,
-            run: async ({ slug, monitorIds = [], groupName }) => {
-                slug = String(slug || "").trim().toLowerCase();
-                const page = await R.findOne("status_page", " slug = ? ", [slug]);
-                if (!page) {
-                    throw new Error(`No status page with slug '${slug}' (see list_status_pages)`);
-                }
-                const result = await addMonitorsToPage(page, monitorIds, groupName);
-                const base = ((await Settings.get("primaryBaseURL")) || "").replace(/\/+$/, "");
-                return { slug, url: `${base}/status/${slug}`, ...result };
+            run: async ({ slug, monitorIds = [], groupName }, key) => {
+                const ids = await checkMonitorIds(monitorIds);
+                return editStatusPage(key, slug, (config, groups) => addToGroups(groups, ids, groupName));
             },
+        },
+        {
+            name: "update_monitor",
+            description:
+                "Change any monitor settings — rename it, change its URL, interval, retries, description, etc. Loads the monitor, applies `changes` (field names as in ui_action getMonitor), and saves it the way the dashboard's edit form does. Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    id: { type: "integer", description: "Monitor ID (from list_monitors)" },
+                    changes: {
+                        type: "object",
+                        description: "Fields to change, e.g. { \"name\": \"Njozi · API\" } or { \"url\": \"https://…\", \"interval\": 120 }",
+                    },
+                },
+                required: ["id", "changes"],
+            },
+            write: true,
+            run: async ({ id, changes }, key) => {
+                if (!changes || typeof changes !== "object" || Array.isArray(changes) || Object.keys(changes).length === 0) {
+                    throw new Error("changes must be an object with at least one field");
+                }
+                if ("id" in changes && changes.id !== id) {
+                    throw new Error("changes cannot change the monitor id");
+                }
+                const { monitor } = await act(key, "getMonitor", [id]);
+                const unknown = Object.keys(changes).filter((k) => !(k in monitor));
+                if (unknown.length) {
+                    throw new Error(`Unknown monitor fields: ${unknown.join(", ")}. Use the field names returned by ui_action getMonitor.`);
+                }
+                const res = await act(key, "editMonitor", [{ ...monitor, ...changes }]);
+                const { monitor: saved } = await act(key, "getMonitor", [id]);
+                // The edit form ignores some fields (e.g. active); never report those as changed
+                const same = (a, b) => (a !== null && typeof a === "object" ? JSON.stringify(a) === JSON.stringify(b) : String(a) === String(b));
+                const notApplied = Object.keys(changes).filter((k) => !same(saved[k], changes[k]));
+                if (notApplied.length) {
+                    const hint = notApplied.includes("active") ? " Use pause_monitor / resume_monitor for active." : "";
+                    throw new Error(`Saved, but the edit form does not change: ${notApplied.join(", ")}.${hint}`);
+                }
+                return { id, msg: res.msg, changed: Object.fromEntries(Object.keys(changes).map((k) => [k, saved[k]])) };
+            },
+        },
+        {
+            name: "delete_monitor",
+            description: "Delete a monitor and its history (for a group monitor, deleteChildren also deletes its children). Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    id: { type: "integer", description: "Monitor ID (from list_monitors)" },
+                    deleteChildren: { type: "boolean", description: "Group monitors only: also delete the monitors inside it" },
+                },
+                required: ["id"],
+            },
+            write: true,
+            run: async ({ id, deleteChildren = false }, key) => {
+                const res = await act(key, "deleteMonitor", [id, deleteChildren]);
+                return { id, deleted: true, msg: res.msg };
+            },
+        },
+        {
+            name: "update_status_page",
+            description:
+                "Change a status page's settings: title, description, footer text, theme, custom domains, slug and display options. Only the fields you pass change. Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    slug: { type: "string", description: "Current slug (from list_status_pages)" },
+                    title: { type: "string" },
+                    description: { type: "string", description: "Shown under the header; Markdown" },
+                    footerText: { type: "string", description: "Markdown" },
+                    theme: { type: "string", enum: ["light", "dark", "auto"] },
+                    newSlug: { type: "string", description: "Rename the page's URL slug" },
+                    domainNameList: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "Custom domains served by this page (each becomes public-only). Replaces the list.",
+                    },
+                    showPoweredBy: { type: "boolean" },
+                    showTags: { type: "boolean" },
+                    showCertificateExpiry: { type: "boolean" },
+                    autoRefreshInterval: { type: "integer", minimum: 5, description: "Seconds" },
+                    customCSS: { type: "string" },
+                },
+                required: ["slug"],
+            },
+            write: true,
+            run: async ({ slug, newSlug, ...fields }, key) => {
+                const allowed = ["title", "description", "footerText", "theme", "domainNameList", "showPoweredBy", "showTags", "showCertificateExpiry", "autoRefreshInterval", "customCSS"];
+                const changes = Object.fromEntries(Object.entries(fields).filter(([k, v]) => allowed.includes(k) && v !== undefined));
+                if (newSlug !== undefined) {
+                    changes.slug = String(newSlug).trim().toLowerCase();
+                }
+                if (Object.keys(changes).length === 0) {
+                    throw new Error(`Pass at least one of: ${[...allowed, "newSlug"].join(", ")}`);
+                }
+                if (changes.theme && !["light", "dark", "auto"].includes(changes.theme)) {
+                    throw new Error("theme must be light, dark or auto");
+                }
+                return editStatusPage(key, slug, (config) => {
+                    Object.assign(config, changes);
+                    return { changed: Object.keys(changes) };
+                });
+            },
+        },
+        {
+            name: "rename_status_page_group",
+            description: "Rename a group (section heading) on a status page. Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    slug: { type: "string" },
+                    groupName: { type: "string", description: "Current heading" },
+                    newName: { type: "string" },
+                },
+                required: ["slug", "groupName", "newName"],
+            },
+            write: true,
+            run: async ({ slug, groupName, newName }, key) => {
+                if (!String(newName || "").trim()) {
+                    throw new Error("newName is required");
+                }
+                return editStatusPage(key, slug, (config, groups) => {
+                    findGroup(groups, groupName).name = String(newName).trim();
+                    return { group: String(newName).trim() };
+                });
+            },
+        },
+        {
+            name: "delete_status_page_group",
+            description:
+                "Delete a group from a status page. Its monitors are only taken off this page (they keep running). Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: { slug: { type: "string" }, groupName: { type: "string", description: "Heading of the group to delete" } },
+                required: ["slug", "groupName"],
+            },
+            write: true,
+            run: async ({ slug, groupName }, key) =>
+                editStatusPage(key, slug, (config, groups) => {
+                    const group = findGroup(groups, groupName);
+                    groups.splice(groups.indexOf(group), 1);
+                    return { deletedGroup: group.name, monitorsRemovedFromPage: group.monitorList.map((m) => m.id) };
+                }),
+        },
+        {
+            name: "remove_monitors_from_status_page",
+            description: "Take monitors off a status page (they keep running and alerting). Needs a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    slug: { type: "string" },
+                    monitorIds: { type: "array", items: { type: "integer" }, minItems: 1, description: "Monitor IDs to remove" },
+                },
+                required: ["slug", "monitorIds"],
+            },
+            write: true,
+            run: async ({ slug, monitorIds = [] }, key) => {
+                const ids = new Set(monitorIds.map(Number));
+                if (ids.size === 0) {
+                    throw new Error("Pass at least one monitor id");
+                }
+                return editStatusPage(key, slug, (config, groups) => {
+                    const removed = groups.flatMap((g) => g.monitorList.filter((m) => ids.has(m.id)).map((m) => m.id));
+                    for (const g of groups) {
+                        g.monitorList = g.monitorList.filter((m) => !ids.has(m.id));
+                    }
+                    return { removed, notOnPage: [...ids].filter((id) => !removed.includes(id)) };
+                });
+            },
+        },
+        {
+            name: "delete_status_page",
+            description: "Delete a status page (monitors keep running). Needs a Read & write token.",
+            inputSchema: { type: "object", properties: { slug: { type: "string" } }, required: ["slug"] },
+            write: true,
+            run: async ({ slug }, key) => {
+                slug = String(slug || "").trim().toLowerCase();
+                const res = await act(key, "deleteStatusPage", [slug]);
+                return { slug, deleted: true, msg: res.msg };
+            },
+        },
+        {
+            name: "list_ui_actions",
+            description:
+                "Everything the dashboard can do that MCP exposes through ui_action: action names, their arguments in order, and whether they need a Read & write token. Use it for anything without a dedicated tool (tags, notifications, maintenance windows, incidents, proxies, Docker hosts, …).",
+            inputSchema: { type: "object", properties: {} },
+            annotations: { readOnlyHint: true },
+            run: async (args, key) => ({
+                yourAccess: key.scope === "mcp-write" ? "read & write" : "read only",
+                actions: Object.fromEntries(Object.entries(ACTIONS).map(([name, a]) => [name, { args: a.params, needsWrite: a.write, about: a.about }])),
+                dashboardOnly:
+                    "Login, users, passwords, 2FA, API/MCP tokens and server settings stay in the dashboard on purpose: the dashboard asks for your password for those.",
+            }),
+        },
+        {
+            name: "ui_action",
+            description:
+                "Run any dashboard action (see list_ui_actions) with the same validation and effects as clicking it in the UI. Pass positional `args` in the listed order. Reads work with any token; changes need a Read & write token.",
+            inputSchema: {
+                type: "object",
+                properties: {
+                    action: { type: "string", description: "Action name from list_ui_actions, e.g. 'addTag' or 'getMaintenanceList'" },
+                    args: { type: "array", description: "Positional arguments, e.g. [{ \"name\": \"prod\", \"color\": \"#ff0000\" }]" },
+                },
+                required: ["action"],
+            },
+            run: async ({ action, args = [] }, key) => act(key, action, args),
         },
         {
             name: "resume_monitor",
@@ -487,8 +739,7 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
             inputSchema: idArg,
             write: true,
             run: async ({ id }, key) => {
-                await startMonitor(key.user_id, id);
-                await server.sendUpdateMonitorIntoList({ userID: key.user_id }, id);
+                await act(key, "resumeMonitor", [id]);
                 return { id, paused: false };
             },
         },
@@ -587,3 +838,5 @@ module.exports = function createMcpRouter({ pauseMonitor, startMonitor, updateMo
 
     return router;
 };
+
+module.exports.addToGroups = addToGroups; // exported for unit tests

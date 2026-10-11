@@ -13,7 +13,7 @@ const Database = require("./database");
 /**
  * Send list of notification providers to client
  * @param {Socket} socket Socket.io socket instance
- * @returns {Promise<Bean[]>} List of notifications
+ * @returns {Promise<object[]>} The list sent (same shape the dashboard receives)
  */
 async function sendNotificationList(socket) {
     const timeLogger = new TimeLogger();
@@ -32,7 +32,7 @@ async function sendNotificationList(socket) {
 
     timeLogger.print("Send Notification List");
 
-    return list;
+    return result;
 }
 
 /**
@@ -99,20 +99,17 @@ async function sendImportantHeartbeatList(socket, monitorID, toUser = false, ove
 /**
  * Emit proxy list to client
  * @param {Socket} socket Socket.io socket instance
- * @returns {Promise<Bean[]>} List of proxies
+ * @returns {Promise<object[]>} The list sent (same shape the dashboard receives)
  */
 async function sendProxyList(socket) {
     const timeLogger = new TimeLogger();
 
-    const list = await R.find("proxy"); // shared admin workspace
-    io.to(socket.userID).emit(
-        "proxyList",
-        list.map((bean) => bean.export())
-    );
+    const result = (await R.find("proxy")).map((bean) => bean.export()); // shared admin workspace
+    io.to(socket.userID).emit("proxyList", result);
 
     timeLogger.print("Send Proxy List");
 
-    return list;
+    return result;
 }
 
 /**
@@ -165,7 +162,7 @@ async function sendInfo(socket, hideVersion = false) {
 /**
  * Send list of docker hosts to client
  * @param {Socket} socket Socket.io socket instance
- * @returns {Promise<Bean[]>} List of docker hosts
+ * @returns {Promise<object[]>} The list sent (same shape the dashboard receives)
  */
 async function sendDockerHostList(socket) {
     const timeLogger = new TimeLogger();
@@ -181,13 +178,13 @@ async function sendDockerHostList(socket) {
 
     timeLogger.print("Send Docker Host List");
 
-    return list;
+    return result;
 }
 
 /**
  * Send list of docker hosts to client
  * @param {Socket} socket Socket.io socket instance
- * @returns {Promise<Bean[]>} List of docker hosts
+ * @returns {Promise<object[]>} The list sent (same shape the dashboard receives)
  */
 async function sendRemoteBrowserList(socket) {
     const timeLogger = new TimeLogger();
@@ -203,7 +200,7 @@ async function sendRemoteBrowserList(socket) {
 
     timeLogger.print("Send Remote Browser List");
 
-    return list;
+    return result;
 }
 
 /**
