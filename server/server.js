@@ -425,7 +425,13 @@ let needSetup = false;
     app.use(statusPageRouter);
 
     // MCP endpoint (/mcp) for AI clients, authenticated with MCP tokens (Settings → MCP)
-    app.use(require("./routers/mcp-router")({ pauseMonitor, startMonitor, updateMonitorNotification }));
+    app.use(
+        require("./routers/mcp-router")({
+            startMonitor,
+            updateMonitorNotification,
+            registerHandlers: (socket) => onConnection(socket, { mcp: true }),
+        })
+    );
 
     // Universal Route Handler, must be at the end of all express routes.
     app.get("*", async (_request, response) => {
@@ -437,7 +443,9 @@ let needSetup = false;
     });
 
     log.debug("server", "Adding socket handler");
-    io.on("connection", async (socket) => {
+    // Registers every dashboard socket handler. Also used by the MCP router (mcp: true) to run the same
+    // handlers for a token's user — it then stops before the browser-only login handshake.
+    const onConnection = async (socket, { mcp = false } = {}) => {
         await sendInfo(socket, true);
 
         if (needSetup) {
@@ -1802,6 +1810,9 @@ let needSetup = false;
         passwordResetSocketHandler(socket);
 
         log.debug("server", "added all socket handlers");
+        if (mcp) {
+            return;
+        }
 
         // ***************************
         // Better do anything after added all socket handlers here
@@ -1816,7 +1827,8 @@ let needSetup = false;
             socket.emit("loginRequired");
             log.debug("auth", "need auth");
         }
-    });
+    };
+    io.on("connection", (socket) => onConnection(socket));
 
     log.debug("server", "Init the server");
 
